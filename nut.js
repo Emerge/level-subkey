@@ -56,7 +56,7 @@ function clone (_obj) {
   return obj
 }
 
-module.exports = function (db, precodec, codec) {
+exports = module.exports = function (db, precodec, codec) {
   var prehooks = hooks()
   var posthooks = hooks()
   var waiting = [], ready = false
@@ -226,3 +226,7 @@ module.exports = function (db, precodec, codec) {
   }
 
 }
+
+exports.getPathArray = getPathArray
+exports.pathArrayToPath = pathArrayToPath
+exports.resolveKeyPath = resolveKeyPath
