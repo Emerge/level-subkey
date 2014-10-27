@@ -1,9 +1,12 @@
+var path = require("path")
 var EventEmitter = require('events').EventEmitter
 var addpre = require('./range').addPrefix
 var PATH_SEP = require("./codec").PATH_SEP
+var SUBKEY_SEP = require('./codec').SUBKEY_SEP
 var _nut = require('./nut')
 var getPathArray = _nut.getPathArray
 var resolveKeyPath = _nut.resolveKeyPath
+var pathArrayToPath = _nut.pathArrayToPath
 
 var errors = require('levelup/lib/errors')
 
@@ -39,10 +42,10 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
     var k, o = {}
     if(options)
       for(k in options)
-        if(options[k] != undefined)o[k] = options[k]
+        if(options[k] !== undefined)o[k] = options[k]
     if(opts)
       for(k in opts)
-        if(opts[k] != undefined) o[k] = opts[k]
+        if(opts[k] !== undefined) o[k] = opts[k]
     return o
   }
 
@@ -146,6 +149,17 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
   emitter.createReadStream = function (opts) {
     opts = mergeOpts(opts)
     opts.path = opts.path || prefix
+
+    //set opts.start to speedup leveldb interator
+    var vPath = pathArrayToPath(getPathArray(opts.path))
+    //do not set opts.start if gte or min exists
+    if (opts.gte === undefined && opts.min === undefined) {
+        if (!opts.start) {
+            opts.start = vPath + SUBKEY_SEP
+        } else {
+            opts.start = path.resolve(vPath, opts.start) + SUBKEY_SEP
+        }
+    }
     var stream
     var it = nut.iterator(opts, function (err, it) {
       stream.setIterator(it)
