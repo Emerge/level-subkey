@@ -20,7 +20,7 @@ for real-time changing data.
 * rename sublevel.prefix() to sublevel.pathAsArray()
 + sublevel.path()
   * the sublevel.path and options.path are always absolute key path.
-+ options.absoluteKey: return the key as absolute key path.
++ options.absoluteKey: if true return the key as absolute key path.
 + sublevel.subkeys()
 + minimatch supports for hook and search.
 * the subkey must be escaped the PATH\_SEP by youself.
