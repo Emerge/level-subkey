@@ -107,14 +107,21 @@ var plant = stuff.Sublevel('plant')
 //put a key into animal!
 animal.put("pig", value, function () {})
 
-//new usage:
+//new dynamic hierarchy data storage usage:
 animal.put("../plant/cucumber", value, function (err) {})
 db.put("/stuff/animal/pig", value, function(err){})
 db.get("/stuff/animal/pig", function(err, value){})
 
+//list all keys in "/stuff/animal" path
+db.createReadStream({path: "/stuff/animal"})
+
+//list all keys in "/stuff/plant" path
+animal.createReadStream({start: "../plant"})
+
 //crazy usage:
 //the path will always be absolute key path.
-animal.setPath( "/stuff/plant" )
+animal.setPath("/stuff/plant")
+animal.setPath(plant)
 //now the "animal" is plant in fact.
 animal.get("cucumber", function(err, value){})
 
