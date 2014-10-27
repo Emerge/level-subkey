@@ -15,14 +15,16 @@ for real-time changing data.
 
 * dynamic sublevels
 * hierarchy data store like path now.
-* rename options.prefix to options.parent
+* rename options.prefix to options.path
+  * the path can be a sublevel object, a key path string, or a path array.
 * rename sublevel.prefix() to sublevel.pathAsArray()
 + sublevel.path()
   * the sublevel.path and options.path are always absolute key path.
 + options.absoluteKey: return the key as absolute key path.
 + sublevel.subkeys()
 + minimatch supports for hook and search.
-
+* the subkey must be escaped the PATH\_SEP by youself.
+* the hooks match key use wildchar(see minimatch) now.
 
 ## level-sublevel@6 **BREAKING CHANGES**
 
@@ -102,11 +104,13 @@ var plant = stuff.Sublevel('plant')
 animal.put("pig", value, function () {})
 
 //new usage:
-animal.put("../plant/cucumber", value, function () {})
-db.put("stuff/animal/pig", value, function(){})
+animal.put("../plant/cucumber", value, function (err) {})
+db.put("/stuff/animal/pig", value, function(err){})
+db.get("/stuff/animal/pig", function(err, value){})
 
 //crazy usage:
-animal.name = "stuff/plant"
+//the path will always be absolute key path.
+animal.setPath( "/stuff/plant" )
 //now the "animal" is plant in fact.
 animal.get("cucumber", function(err, value){})
 
@@ -164,7 +168,8 @@ db.pre({gte:"", lte:"", path:""}, function (ch, add) {
 })
 
 //hooks a key, and the key can be relative or absolute key path and minimatch supports.
-db.pre(key, function (ch, add) {
+db.pre("a*", function (ch, add) {
+  //add(false) means do not put this key into storage.
   add({
     key: ''+Date.now(), 
     value: ch.key, 
@@ -183,11 +188,12 @@ instead of the current section, similar to the `pre` hook above.
 
 ``` js
 var sub1 = db.sublevel('SUB_1')
-var sub2 = db.sublevel('SUM_2')
+var sub2 = db.sublevel('SUB_2')
 
 sub.batch([
   {key: 'key', value: 'Value', type: 'put'},
   {key: 'key', value: 'Value', type: 'put', path: sub2},
+  {key: '../SUB_1/key', value: 'Value', type: 'put', path: sub2},
 ], function (err) {...})
 ```
 
