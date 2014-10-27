@@ -1,14 +1,48 @@
+var path = require('path')
 var hooks = require('./hooks')
 var ltgt = require('ltgt')
+var PATH_SEP = require('./codec').PATH_SEP
 
 function isFunction (f) {
   return 'function' === typeof f
 }
 
-function getPathArray (db) {
-  if(db == null) return db
-  if(isFunction(db.pathAsArray)) return db.pathAsArray()
-  return db
+function isString (f) {
+  return 'string' === typeof f
+}
+
+function pathArrayToPath(aPath) {
+    return PATH_SEP + aPath.join(PATH_SEP)
+}
+
+function pathToPathArray(aPath) {
+    while (aPath.length && aPath[0] == PATH_SEP) aPath = aPath.substring(1)
+    while (aPath.length && aPath[aPath.length-1] == PATH_SEP) aPath = aPath.substring(0, aPath.length-1)
+    if (aPath.length)
+        return aPath.split(PATH_SEP)
+    else
+        return []
+}
+
+function getPathArray (aPath) {
+  if(aPath == null) return aPath
+  //is a sublevel object?
+  if(isFunction(aPath.pathAsArray)) return aPath.pathAsArray()
+  if(isString(aPath) && aPath.length) return pathToPathArray(aPath)
+  //is a path array:
+  return aPath
+}
+
+function resolveKeyPath(aPathArray, aKey) {
+    if (isString(aKey) && aKey.length) {
+        var vPath = pathArrayToPath(aPathArray)
+        vPath = path.resolve(vPath, aKey)
+        aKey = path.basename(vPath)
+        vPath = path.dirname(vPath)
+        return [pathToPathArray(vPath), aKey]
+    }
+    else
+        return [aPathArray, aKey]
 }
 
 function has(obj, name) {
@@ -27,8 +61,9 @@ module.exports = function (db, precodec, codec) {
   var posthooks = hooks()
   var waiting = [], ready = false
 
-  function encodePath(prefix, key, opts1, opts2) {
-    return precodec.encode([ prefix, codec.encodeKey(key, opts1, opts2 ) ])
+  //aKeyPath=[path, key]
+  function encodePath(aKeyPath, opts1, opts2) {
+    return precodec.encode([ aKeyPath[0], codec.encodeKey(aKeyPath[1], opts1, opts2 ) ])
   }
 
   function decodePath(data) {
@@ -65,9 +100,10 @@ module.exports = function (db, precodec, codec) {
       //apply prehooks here.
       for(var i = 0; i < ops.length; i++) {
         var op = ops[i]
-        addEncodings(op, op.path)
+        addEncodings(op, op.path) //if op.path is a sublevel object.
         op.path = getPathArray(op.path)
-        prehooks.trigger([op.path, op.key], [op, add, ops])
+        op._realKeyPath = resolveKeyPath(op.path, op.key)
+        prehooks.trigger(op._realKeyPath, [op, add, ops])
 
         function add(op) {
           if(op === false) return delete ops[i]
@@ -85,7 +121,7 @@ module.exports = function (db, precodec, codec) {
         (db.db || db).batch(
           ops.map(function (op) {
             return {
-              key: encodePath(op.path, op.key, opts, op),
+              key: encodePath(op._realKeyPath, opts, op),
               value:
                   op.type !== 'del'
                 ? codec.encodeValue(
@@ -113,7 +149,7 @@ module.exports = function (db, precodec, codec) {
     get: function (key, path, opts, cb) {
       opts.asBuffer = codec.isValueAsBuffer(opts)
       return (db.db || db).get(
-        encodePath(path, key, opts),
+        encodePath(resolveKeyPath(path, key), opts),
         opts,
         function (err, value) {
           if(err) cb(err)
@@ -143,10 +179,10 @@ module.exports = function (db, precodec, codec) {
     },
     iterator: function (_opts, cb) {
       var opts = clone(_opts || {})
-      var prefix = opts.path || []
+      var vPath = opts.path || []
 
       function encodeKey(key) {
-        return encodePath(prefix, key, opts, {})
+        return encodePath([vPath, key], opts, {})
       }
 
       ltgt.toLtgt(opts, opts, encodeKey, precodec.lowerBound, precodec.upperBound)
