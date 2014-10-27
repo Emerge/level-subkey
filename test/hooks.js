@@ -36,13 +36,13 @@ test('subsections', function (t) {
   })
 
   base.batch([
-    { key: 'a', value: 1, type: 'put', prefix: foo },
-    { key: 'k', value: 2, type: 'put', prefix: foo },
-    { key: 'q', value: 3, type: 'put', prefix: foo },
-    { key: 'z', value: 4, type: 'put', prefix: foo },
+    { key: 'a', value: 1, type: 'put', path: foo },
+    { key: 'k', value: 2, type: 'put', path: foo },
+    { key: 'q', value: 3, type: 'put', path: foo },
+    { key: 'z', value: 4, type: 'put', path: foo },
     //into the main base
     { key: 'b', value: 5, type: 'put'},
-    { key: 'b', value: 5, type: 'put', prefix: bar}
+    { key: 'b', value: 5, type: 'put', path: bar}
   ], function (err) {
     t.equal(n, 4)
     t.equal(m, 4)

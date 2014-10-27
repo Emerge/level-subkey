@@ -16,8 +16,9 @@ for real-time changing data.
 * dynamic sublevels
 * hierarchy data store like path now.
 * rename options.prefix to options.parent
-* rename sublevel.prefix to sublevel.name
-  * the sublevel.name and options.parent are always absolute key path.
+* rename sublevel.prefix() to sublevel.pathAsArray()
++ sublevel.path()
+  * the sublevel.path and options.path are always absolute key path.
 + options.absoluteKey: return the key as absolute key path.
 + sublevel.subkeys()
 + minimatch supports for hook and search.
@@ -152,13 +153,13 @@ Notice that the `parent` property to `add()` is set to `sub`, which tells the ho
 var sub = db.sublevel('SEQ')
 
 //Hooks range 
-db.pre({gte:"", lte:"", parent:""}, function (ch, add) {
+db.pre({gte:"", lte:"", path:""}, function (ch, add) {
   add({
     key: ''+Date.now(), 
     value: ch.key, 
     type: 'put',
     // NOTE: pass the destination db to add the value to that subsection!
-    parent: sub
+    path: sub
   })
 })
 
@@ -169,7 +170,7 @@ db.pre(key, function (ch, add) {
     value: ch.key, 
     type: 'put',
     // NOTE: pass the destination db to add the value to that subsection!
-    parent: sub
+    path: sub
   })
 })
 ```
@@ -186,7 +187,7 @@ var sub2 = db.sublevel('SUM_2')
 
 sub.batch([
   {key: 'key', value: 'Value', type: 'put'},
-  {key: 'key', value: 'Value', type: 'put', prefix: sub2},
+  {key: 'key', value: 'Value', type: 'put', path: sub2},
 ], function (err) {...})
 ```
 

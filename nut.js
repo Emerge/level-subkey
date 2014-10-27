@@ -5,9 +5,9 @@ function isFunction (f) {
   return 'function' === typeof f
 }
 
-function getParentName (db) {
+function getPathArray (db) {
   if(db == null) return db
-  if(isFunction(db.name)) return db.name()
+  if(isFunction(db.pathAsArray)) return db.pathAsArray()
   return db
 }
 
@@ -66,8 +66,8 @@ module.exports = function (db, precodec, codec) {
       for(var i = 0; i < ops.length; i++) {
         var op = ops[i]
         addEncodings(op, op.prefix)
-        op.prefix = getParentName(op.prefix)
-        prehooks.trigger([op.prefix, op.key], [op, add, ops])
+        op.path = getPathArray(op.path)
+        prehooks.trigger([op.path, op.key], [op, add, ops])
 
         function add(op) {
           if(op === false) return delete ops[i]
@@ -85,7 +85,7 @@ module.exports = function (db, precodec, codec) {
         (db.db || db).batch(
           ops.map(function (op) {
             return {
-              key: encodePrefix(op.prefix, op.key, opts, op),
+              key: encodePrefix(op.path, op.key, opts, op),
               value:
                   op.type !== 'del'
                 ? codec.encodeValue(
@@ -102,7 +102,7 @@ module.exports = function (db, precodec, codec) {
           function (err) {
               if(err) return cb(err)
             ops.forEach(function (op) {
-              posthooks.trigger([op.prefix, op.key], [op])
+              posthooks.trigger([op.path, op.key], [op])
             })
             cb()
           }
@@ -110,10 +110,10 @@ module.exports = function (db, precodec, codec) {
       else
         cb()
     },
-    get: function (key, prefix, opts, cb) {
+    get: function (key, path, opts, cb) {
       opts.asBuffer = codec.isValueAsBuffer(opts)
       return (db.db || db).get(
-        encodePrefix(prefix, key, opts),
+        encodePrefix(path, key, opts),
         opts,
         function (err, value) {
           if(err) cb(err)
@@ -143,7 +143,7 @@ module.exports = function (db, precodec, codec) {
     },
     iterator: function (_opts, cb) {
       var opts = clone(_opts || {})
-      var prefix = opts.prefix || []
+      var prefix = opts.path || []
 
       function encodeKey(key) {
         return encodePrefix(prefix, key, opts, {})
@@ -151,7 +151,7 @@ module.exports = function (db, precodec, codec) {
 
       ltgt.toLtgt(opts, opts, encodeKey, precodec.lowerBound, precodec.upperBound)
 
-      opts.prefix = null
+      opts.path = null
 
       //************************************************
       //hard coded defaults, for now...

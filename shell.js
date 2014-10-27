@@ -1,5 +1,6 @@
 var EventEmitter = require('events').EventEmitter
 var addpre = require('./range').addPrefix
+var PATH_SEP = require("./codec").PATH_SEP
 
 var errors = require('levelup/lib/errors')
 
@@ -48,15 +49,19 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
 
     nut.apply([{
       key: key, value: value,
-      prefix: prefix.slice(), type: 'put'
+      path: prefix.slice(), type: 'put'
     }], mergeOpts(opts), function (err) {
       if(!err) { emitter.emit('put', key, value); cb(null) }
       if(err) return cb(err)
     })
   }
 
-  emitter.name = function () {
+  emitter.pathAsArray = function () {
     return prefix.slice()
+  }
+
+  emitter.path = function () {
+    return PATH_SEP + prefix.join(PATH_SEP)
   }
 
   emitter.del = function (key, opts, cb) {
@@ -65,7 +70,7 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
 
     nut.apply([{
       key: key,
-      prefix: prefix.slice(), type: 'del'
+      path: prefix.slice(), type: 'del'
     }], mergeOpts(opts), function (err) {
       if(!err) { emitter.emit('del', key); cb(null) }
       if(err) return cb(err)
@@ -81,7 +86,7 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
       return {
         key:           op.key,
         value:         op.value,
-        prefix:        op.prefix || prefix,
+        path:        op.path || prefix,
         keyEncoding:   op.keyEncoding,    // *
         valueEncoding: op.valueEncoding,  // * (TODO: encodings on sublevel)
         type:          op.type
@@ -127,7 +132,7 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
 
   emitter.createReadStream = function (opts) {
     opts = mergeOpts(opts)
-    opts.prefix = prefix
+    opts.path = prefix
     var stream
     var it = nut.iterator(opts, function (err, it) {
       stream.setIterator(it)

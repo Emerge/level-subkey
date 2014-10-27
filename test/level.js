@@ -32,7 +32,7 @@ function prehookPut (db) {
     var log = db.sublevel('log')
     var c = 0
     db.pre(function (op, add) {
-      add({key: ''+c++, value: op.key, prefix: log.name()})
+      add({key: ''+c++, value: op.key, path: log.pathAsArray()})
     })
 
     db.put('hello', 'there?', function (err) {
@@ -54,7 +54,7 @@ function prehookBatch (db) {
     var log = db.sublevel('log')
     var c = 0
     db.pre(function (op, add) {
-      add({key: ''+c++, value: op.key, prefix: log.name()})
+      add({key: ''+c++, value: op.key, path: log.pathAsArray()})
     })
 
     db.batch([
