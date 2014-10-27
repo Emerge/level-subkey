@@ -5,8 +5,8 @@ var range = require('../range')
 
 tape('test prefix', function (t) {
 
-  t.ok( range.prefix([['foo'], 'y'], [['foo'], 'yellow']) )
-  t.notOk( range.prefix([['foo'], 'y'], [['foo'], 'Yellow']) )
+  t.ok( range.prefix([['foo'], 'y*'], [['foo'], 'yellow']) )
+  t.notOk( range.prefix([['foo'], 'y*'], [['foo'], 'Yellow']) )
 
   t.ok( range.prefix([['foo', 'bar']], [['foo', 'bar'], 'foo']) )
   t.notOk( range.prefix([['foo', 'bar']], [['foo', 'bar', 'baz'], 'foo']) )
