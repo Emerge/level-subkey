@@ -1,6 +1,9 @@
 var EventEmitter = require('events').EventEmitter
 var addpre = require('./range').addPrefix
 var PATH_SEP = require("./codec").PATH_SEP
+var _nut = require('./nut')
+var getPathArray = _nut.getPathArray
+var resolveKeyPath = _nut.resolveKeyPath
 
 var errors = require('levelup/lib/errors')
 
@@ -64,6 +67,16 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
     return PATH_SEP + prefix.join(PATH_SEP)
   }
 
+  emitter.setPath = function (aPath) {
+      aPath = getPathArray(aPath)
+      if (aPath) {
+          prefix = aPath
+          return true
+      } else {
+          return false
+      }
+  }
+
   emitter.del = function (key, opts, cb) {
     if('function' === typeof opts) cb = opts, opts = {}
     if(!cb) cb = errback
@@ -113,26 +126,26 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
       emitter.sublevels[name] || sublevel(nut, prefix.concat(name), createStream, mergeOpts(opts))
   }
 
-  emitter.pre = function (key, hook) {
-    if(isFunction(key)) return nut.pre([prefix], key)
-    if(isString(key)) return nut.pre([prefix, key], hook)
-    if(isObject(key)) return nut.pre(addpre(prefix, key), hook)
+  function _addHook(key, callback, hooksAdd) {
+      if(isFunction(key)) return hooksAdd([prefix], key)
+      if(isString(key))   return hooksAdd(resolveKeyPath(prefix, key), callback)
+      if(isObject(key))   return hooksAdd(addpre(prefix, key), callback)
 
-    throw new Error('not implemented yet')
+      //TODO: handle ranges, needed for level-live-stream, etc.
+      throw new Error('not implemented yet')
+  }
+
+  emitter.pre = function (key, hook) {
+      return _addHook(key, hook, nut.pre)
   }
 
   emitter.post = function (key, hook) {
-    if(isFunction(key)) return nut.post([prefix], key)
-    if(isString(key))   return nut.post([prefix, key], hook)
-    if(isObject(key))   return nut.post(addpre(prefix, key), hook)
-
-    //TODO: handle ranges, needed for level-live-stream, etc.
-    throw new Error('not implemented yet')
+      return _addHook(key, hook, nut.post)
   }
 
   emitter.createReadStream = function (opts) {
     opts = mergeOpts(opts)
-    opts.path = prefix
+    opts.path = opts.path || prefix
     var stream
     var it = nut.iterator(opts, function (err, it) {
       stream.setIterator(it)
