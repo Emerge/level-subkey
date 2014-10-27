@@ -32,12 +32,12 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
   createStream = createStream || function (e) { return e }
 
   function mergeOpts(opts) {
-    var o = {}
+    var k, o = {}
     if(options)
-      for(var k in options)
+      for(k in options)
         if(options[k] != undefined)o[k] = options[k]
     if(opts)
-      for(var k in opts)
+      for(k in opts)
         if(opts[k] != undefined) o[k] = opts[k]
     return o
   }
@@ -55,7 +55,7 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
     })
   }
 
-  emitter.prefix = function () {
+  emitter.name = function () {
     return prefix.slice()
   }
 

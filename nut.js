@@ -5,9 +5,9 @@ function isFunction (f) {
   return 'function' === typeof f
 }
 
-function getPrefix (db) {
+function getParentName (db) {
   if(db == null) return db
-  if(isFunction(db.prefix)) return db.prefix()
+  if(isFunction(db.name)) return db.name()
   return db
 }
 
@@ -66,7 +66,7 @@ module.exports = function (db, precodec, codec) {
       for(var i = 0; i < ops.length; i++) {
         var op = ops[i]
         addEncodings(op, op.prefix)
-        op.prefix = getPrefix(op.prefix)
+        op.prefix = getParentName(op.prefix)
         prehooks.trigger([op.prefix, op.key], [op, add, ops])
 
         function add(op) {

@@ -16,8 +16,8 @@ test('subsections', function (t) {
   t.strictEqual(base.sublevel('foo'), foo)
   t.strictEqual(base.sublevel('bar'), bar)
 
-  console.log('prefix:', foo.prefix())
-  console.log('prefix:', bar.prefix())
+  console.log('prefix:', foo.name())
+  console.log('prefix:', bar.name())
 
   var fooBlerg = foo.sublevel('blerg')
   t.deepEqual(foo.sublevels, {blerg: fooBlerg})

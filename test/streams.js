@@ -34,9 +34,9 @@ require('tape')('sublevel', function (t) {
     all(db, function (err, obj) {
       console.log(obj)
       t.deepEqual(obj, 
-        { '!A!a': _a,
-          '!A!b': _b,
-          '!A!c': _c
+        { '/A#a': _a,
+          '/A#b': _b,
+          '/A#c': _c
         })
 
       all(a, function (err, obj) {
