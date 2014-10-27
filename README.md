@@ -11,20 +11,24 @@ This module allows you to create a hierarchy data store with
 kinda like tables in an sql database, but evented, and ranged,
 for real-time changing data.
 
-## level-sublevel@7 **BREAKING CHANGES**
+## level-sublevel@7 **BREAKING CHANGES** via Riceball LEE
 
 * dynamic sublevels
+* the keys are _encoded_ has changed, and _this means
+you cannot run 7 on a database you created with 6_.
 * hierarchy data store like path now.
 * rename options.prefix to options.path
   * the path can be a sublevel object, a key path string, or a path array.
 * rename sublevel.prefix() to sublevel.pathAsArray()
-+ sublevel.path()
++ sublevel.path() return this sublevel key path.
   * the sublevel.path and options.path are always absolute key path.
 + options.absoluteKey: if true return the key as absolute key path.
 + sublevel.subkeys()
 + minimatch supports for hook and search.
 * the subkey must be escaped the PATH\_SEP by youself.
 * the hooks match key use wildchar(see minimatch) now.
+* merge the "rvagg/special-words" patch to avoid injection.
+  * add the property getter and setter to keep compatibility.
 
 ## level-sublevel@6 **BREAKING CHANGES**
 
@@ -169,7 +173,7 @@ db.pre({gte:"", lte:"", path:""}, function (ch, add) {
 
 //hooks a key, and the key can be relative or absolute key path and minimatch supports.
 db.pre("a*", function (ch, add) {
-  //add(false) means do not put this key into storage.
+  //NOTE: add(false) means do not put this key into storage.
   add({
     key: ''+Date.now(), 
     value: ch.key, 
