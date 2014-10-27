@@ -125,8 +125,8 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
   }
 
   emitter.sublevel = function (name, opts) {
-    return emitter.sublevels[name] =
-      emitter.sublevels[name] || sublevel(nut, prefix.concat(name), createStream, mergeOpts(opts))
+    return emitter.sublevels['$' + name] =
+      emitter.sublevels['$' + name] || sublevel(nut, prefix.concat(name), createStream, mergeOpts(opts))
   }
 
   function _addHook(key, callback, hooksAdd) {
