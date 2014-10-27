@@ -70,6 +70,15 @@ exports = module.exports = function (db, precodec, codec) {
     return precodec.decode(data)
   }
 
+  function decodeKeyWithOptions(key, opts) {
+      //v=[parent, key]
+      v = precodec.decode(key)
+      key = codec.decodeKey(v[1], opts);
+      if (opts.absoluteKey) {
+          key = path.join(pathArrayToPath(v[0]), key)
+      }
+      return key
+  }
   function addEncodings(op, aParent) {
     if(aParent && aParent.options) {
       op.keyEncoding =
@@ -163,7 +172,7 @@ exports = module.exports = function (db, precodec, codec) {
       if(opts.keys !== false && opts.values !== false)
         return function (key, value) {
           return {
-            key: codec.decodeKey(precodec.decode(key)[1], opts),
+            key: decodeKeyWithOptions(key, opts),
             value: codec.decodeValue(value, opts)
           }
         }
@@ -173,7 +182,7 @@ exports = module.exports = function (db, precodec, codec) {
         }
       if(opts.keys !== false)
         return function (key) {
-          return codec.decodeKey(precodec.decode(key)[1], opts)
+          return decodeKeyWithOptions(key, opts)
         }
       return function () {}
     },
