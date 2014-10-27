@@ -11,10 +11,15 @@ test('special names', function (t) {
   var proto = base.sublevel('__proto__')
   var toString = base.sublevel('toString')
 
-  t.deepEqual(base.sublevels, {
+  t.deepEqual(base._sublevels, {
     '$constructor': cons,
     '$__proto__': proto,
     '$toString': toString
+  })
+  t.deepEqual(base.sublevels, {
+    'constructor': cons,
+    '__proto__': proto,
+    'toString': toString
   })
   t.deepEqual(cons.sublevels, {})
 
@@ -22,19 +27,22 @@ test('special names', function (t) {
   t.strictEqual(base.sublevel('__proto__'), proto)
   t.strictEqual(base.sublevel('toString'), toString)
 
-  t.deepEqual(cons.prefix(), ['constructor'])
-  t.deepEqual(proto.prefix(), ['__proto__'])
-  t.deepEqual(toString.prefix(), ['toString'])
+  t.strictEqual(cons.path(), '/constructor')
+  t.deepEqual(proto.pathAsArray(), ['__proto__'])
+  t.strictEqual(toString.path(), '/toString')
 
   var consBlerg = cons.sublevel('blerg')
-  t.deepEqual(cons.sublevels, {'$blerg': consBlerg})
+  t.deepEqual(cons._sublevels, {'$blerg': consBlerg})
+  t.deepEqual(cons.sublevels, {'blerg': consBlerg})
   t.strictEqual(cons.sublevel('blerg'), consBlerg)
-  t.deepEqual(consBlerg.prefix(), ['constructor', 'blerg'])
+  t.deepEqual(consBlerg.pathAsArray(), ['constructor', 'blerg'])
+  t.strictEqual(consBlerg.path(), '/constructor/blerg')
 
   var consProto = cons.sublevel('__proto__')
-  t.deepEqual(cons.sublevels, {'$blerg': consBlerg, '$__proto__': consProto})
+  t.deepEqual(cons._sublevels, {'$blerg': consBlerg, '$__proto__': consProto})
+  t.deepEqual(cons.sublevels, {'blerg': consBlerg, '__proto__': consProto})
   t.strictEqual(cons.sublevel('__proto__'), consProto)
-  t.deepEqual(consProto.prefix(), ['constructor', '__proto__'])
+  t.deepEqual(consProto.pathAsArray(), ['constructor', '__proto__'])
 
   t.end()
 })
