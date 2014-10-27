@@ -27,20 +27,20 @@ module.exports = function (db, precodec, codec) {
   var posthooks = hooks()
   var waiting = [], ready = false
 
-  function encodePrefix(prefix, key, opts1, opts2) {
+  function encodePath(prefix, key, opts1, opts2) {
     return precodec.encode([ prefix, codec.encodeKey(key, opts1, opts2 ) ])
   }
 
-  function decodePrefix(data) {
+  function decodePath(data) {
     return precodec.decode(data)
   }
 
-  function addEncodings(op, prefix) {
-    if(prefix && prefix.options) {
+  function addEncodings(op, aParent) {
+    if(aParent && aParent.options) {
       op.keyEncoding =
-        op.keyEncoding || prefix.options.keyEncoding
+        op.keyEncoding || aParent.options.keyEncoding
       op.valueEncoding =
-        op.valueEncoding || prefix.options.valueEncoding
+        op.valueEncoding || aParent.options.valueEncoding
     }
     return op
   }
@@ -65,7 +65,7 @@ module.exports = function (db, precodec, codec) {
       //apply prehooks here.
       for(var i = 0; i < ops.length; i++) {
         var op = ops[i]
-        addEncodings(op, op.prefix)
+        addEncodings(op, op.path)
         op.path = getPathArray(op.path)
         prehooks.trigger([op.path, op.key], [op, add, ops])
 
@@ -85,7 +85,7 @@ module.exports = function (db, precodec, codec) {
         (db.db || db).batch(
           ops.map(function (op) {
             return {
-              key: encodePrefix(op.path, op.key, opts, op),
+              key: encodePath(op.path, op.key, opts, op),
               value:
                   op.type !== 'del'
                 ? codec.encodeValue(
@@ -113,7 +113,7 @@ module.exports = function (db, precodec, codec) {
     get: function (key, path, opts, cb) {
       opts.asBuffer = codec.isValueAsBuffer(opts)
       return (db.db || db).get(
-        encodePrefix(path, key, opts),
+        encodePath(path, key, opts),
         opts,
         function (err, value) {
           if(err) cb(err)
@@ -146,7 +146,7 @@ module.exports = function (db, precodec, codec) {
       var prefix = opts.path || []
 
       function encodeKey(key) {
-        return encodePrefix(prefix, key, opts, {})
+        return encodePath(prefix, key, opts, {})
       }
 
       ltgt.toLtgt(opts, opts, encodeKey, precodec.lowerBound, precodec.upperBound)
