@@ -190,13 +190,14 @@ exports = module.exports = function (db, precodec, codec) {
       var opts = clone(_opts || {})
       var vPath = opts.path || []
 
+      //the key is lowerBound or upperBound.
       function encodeKey(key) {
         return encodePath([vPath, key], opts, {})
       }
 
       ltgt.toLtgt(opts, opts, encodeKey, precodec.lowerBound, precodec.upperBound)
 
-      opts.path = null
+      //opts.path = null
 
       //************************************************
       //hard coded defaults, for now...
