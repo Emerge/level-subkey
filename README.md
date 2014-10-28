@@ -29,6 +29,11 @@ you cannot run 7 on a database you created with 6_.
 * the hooks match key use wildchar(see minimatch) now.
 * merge the "rvagg/special-words" patch to avoid bug and injection.
   + add the sublevels property getter and setter to keep compatibility.
++ can filter in the stream.
+  * options.filter = function(key, value) return
+    *  0: include this item
+    *  1: exclude
+    * -1: stop.
 
 ## level-sublevel@6 **BREAKING CHANGES**
 
