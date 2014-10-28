@@ -1,11 +1,12 @@
 
-//define the key ordering for level-sublevelq
+//define the key ordering for level-sublevel
 
 //var join = '\x01', separate = '\x00'
 //var join = '#', separate = '!'
 var PATH_SEP = '/', SUBKEY_SEP = '#'
 
 
+//the e is array[path, key]
 exports.encode = function (e) {
   return PATH_SEP + e[0].join(PATH_SEP) + SUBKEY_SEP + e[1]
 }
