@@ -31,9 +31,12 @@ you cannot run 7 on a database you created with 6_.
   + add the sublevels property getter and setter to keep compatibility.
 + can filter in the stream.
   * options.filter = function(key, value) return
-    *  0: include this item
-    *  1: exclude
-    * -1: stop.
+    *  0(nut.FILTER_INCLUDED): include this item
+    *  1(nut.FILTER_EXCLUDED): exclude
+    * -1(nut.FILTER_STOPPED): stop.
+* ![bug] the hooks may be memory leak when free sublevel.
+  * https://github.com/dominictarr/level-sublevel/issues/38
+
 
 ## level-sublevel@6 **BREAKING CHANGES**
 

@@ -1,9 +1,15 @@
 var path = require("path")
+var through = require("through")
 var EventEmitter = require('events').EventEmitter
 var addpre = require('./range').addPrefix
-var PATH_SEP = require("./codec").PATH_SEP
-var SUBKEY_SEP = require('./codec').SUBKEY_SEP
+var precodec = require("./codec")
 var _nut = require('./nut')
+
+var FILTER_INCLUDED = _nut.FILTER_INCLUDED
+var FILTER_EXCLUDED = _nut.FILTER_EXCLUDED
+var FILTER_STOPPED  = _nut.FILTER_STOPPED
+var PATH_SEP = precodec.PATH_SEP
+var SUBKEY_SEP = precodec.SUBKEY_SEP
 var getPathArray = _nut.getPathArray
 var resolveKeyPath = _nut.resolveKeyPath
 var pathArrayToPath = _nut.pathArrayToPath
@@ -168,6 +174,15 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
             opts.start = path.resolve(vPath, opts.start) + SUBKEY_SEP
         }
     }
+
+    var isFilterExists = isFunction(opts.filter)
+    var vKeys, vValues
+    if (isFilterExists) {
+        vKeys = opts.keys, vValues = opts.values
+        opts.keys = true
+        opts.values = true
+    }
+
     var stream
     var it = nut.iterator(opts, function (err, it) {
       stream.setIterator(it)
@@ -175,6 +190,24 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
 
     stream = createStream(opts, nut.createDecoder(opts))
     if(it) stream.setIterator(it)
+
+    if (isFilterExists) {
+        var filterStream = through(function(item){            
+            switch (opts.filter(item.key, item.value)) {
+                case  FILTER_EXCLUDED: break        //exclude
+                case  FILTER_STOPPED : this.end()//this.emit('end')   //halt
+                default:
+                    if (vKeys !== false && vValues !== false) {
+                        //this.emit('data',item)
+                        this.push(item)
+                    } else {
+                        if (vKeys !== false)  this.push(item.key)//this.emit('data',item.key)
+                        if (vValues !== false) this.push(item.value)//this.emit('data',item.value)
+                    }
+            }
+        })
+        stream = stream.pipe(filterStream)
+    }
 
     return stream
   }

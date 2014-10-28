@@ -240,3 +240,6 @@ exports = module.exports = function (db, precodec, codec) {
 exports.getPathArray = getPathArray
 exports.pathArrayToPath = pathArrayToPath
 exports.resolveKeyPath = resolveKeyPath
+exports.FILTER_INCLUDED =  0
+exports.FILTER_EXCLUDED =  1
+exports.FILTER_STOPPED  = -1
