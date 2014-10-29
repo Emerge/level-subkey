@@ -54,6 +54,7 @@ require('tape')('sublevel', function (t) {
     {key: '3.c', value: _c , type: 'put'},
     {key: 'd4', value: _d , type: 'put'},
     {key: 'd5', value: _d , type: 'put'},
+    {key: 'z6', value: _d , type: 'put'},
   ], function (err) {
     if(err) throw err
     all(a, {filter: filter}, function (err, obj) {

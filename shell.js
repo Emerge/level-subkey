@@ -68,6 +68,7 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
     if(!cb) cb = errback
 
     nut.apply([{
+      separator: opts.separator,
       key: key, value: value,
       path: prefix.slice(), type: 'put'
     }], mergeOpts(opts), function (err) {
@@ -99,6 +100,7 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
     if(!cb) cb = errback
 
     nut.apply([{
+      separator: opts.separator,
       key: key,
       path: prefix.slice(), type: 'del'
     }], mergeOpts(opts), function (err) {
@@ -114,6 +116,7 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
 
     ops = ops.map(function (op) {
       return {
+        separator:     op.separator,
         key:           op.key,
         value:         op.value,
         path:        op.path || prefix,
@@ -164,17 +167,6 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
     opts = mergeOpts(opts)
     opts.path = opts.path || prefix
 
-    //set opts.start to speedup leveldb interator
-    var vPath = pathArrayToPath(getPathArray(opts.path))
-    //do not set opts.start if gte or min exists
-    if (opts.gte === undefined && opts.min === undefined) {
-        if (!opts.start) {
-            opts.start = vPath + SUBKEY_SEP
-        } else {
-            opts.start = path.resolve(vPath, opts.start) + SUBKEY_SEP
-        }
-    }
-
     var isFilterExists = isFunction(opts.filter)
     var vKeys, vValues
     if (isFilterExists) {
@@ -192,7 +184,7 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
     if(it) stream.setIterator(it)
 
     if (isFilterExists) {
-        var filterStream = through(function(item){            
+        var filterStream = through(function(item){
             switch (opts.filter(item.key, item.value)) {
                 case  FILTER_EXCLUDED: break        //exclude
                 case  FILTER_STOPPED : this.end()//this.emit('end')   //halt

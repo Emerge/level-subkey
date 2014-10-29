@@ -1,7 +1,9 @@
 var path = require('path')
 var hooks = require('./hooks')
 var ltgt = require('ltgt')
-var PATH_SEP = require('./codec').PATH_SEP
+var precodec = require('./codec')
+var PATH_SEP = precodec.PATH_SEP
+var SUBKEY_SEP = precodec.SUBKEY_SEP
 
 function isFunction (f) {
   return 'function' === typeof f
@@ -62,8 +64,9 @@ exports = module.exports = function (db, precodec, codec) {
   var waiting = [], ready = false
 
   //aKeyPath=[path, key]
-  function encodePath(aKeyPath, opts1, opts2) {
-    return precodec.encode([ aKeyPath[0], codec.encodeKey(aKeyPath[1], opts1, opts2 ) ])
+  function encodePath(aKeyPath, opts, op) {
+    var vSep = (op && op.separator) || (opts && opts.separator)
+    return precodec.encode([ aKeyPath[0], codec.encodeKey(aKeyPath[1], opts, op ), vSep])
   }
 
   function decodePath(data) {
@@ -71,11 +74,12 @@ exports = module.exports = function (db, precodec, codec) {
   }
 
   function decodeKeyWithOptions(key, opts) {
-      //v=[parent, key]
-      v = precodec.decode(key)
+      //v=[parent, key, Separator]
+      var v = precodec.decode(key)
       key = codec.decodeKey(v[1], opts);
       if (opts.absoluteKey) {
-          key = path.join(pathArrayToPath(v[0]), key)
+          var vSep = v[2]
+          key = pathArrayToPath(v[0]) + vSep + key
       }
       return key
   }
@@ -111,11 +115,12 @@ exports = module.exports = function (db, precodec, codec) {
         var op = ops[i]
         addEncodings(op, op.path) //if op.path is a sublevel object.
         op.path = getPathArray(op.path)
-        op._realKeyPath = resolveKeyPath(op.path, op.key)
-        prehooks.trigger(op._realKeyPath, [op, add, ops])
+        op._keyPath = resolveKeyPath(op.path, op.key)
+        prehooks.trigger(op._keyPath, [op, add, ops])
 
         function add(op) {
           if(op === false) return delete ops[i]
+          op._keyPath = resolveKeyPath(op.path, op.key)
           ops.push(op)
         }
       }
@@ -130,7 +135,7 @@ exports = module.exports = function (db, precodec, codec) {
         (db.db || db).batch(
           ops.map(function (op) {
             return {
-              key: encodePath(op._realKeyPath, opts, op),
+              key: encodePath(op._keyPath, opts, op),
               value:
                   op.type !== 'del'
                 ? codec.encodeValue(
@@ -191,8 +196,9 @@ exports = module.exports = function (db, precodec, codec) {
       var vPath = opts.path || []
 
       //the key is lowerBound or upperBound.
+      //if opts.start is exists then lowBound key is opt.start
       function encodeKey(key) {
-        return encodePath([vPath, key], opts, {})
+        return encodePath(resolveKeyPath(vPath, key), opts, {})
       }
 
       ltgt.toLtgt(opts, opts, encodeKey, precodec.lowerBound, precodec.upperBound)

@@ -1,4 +1,7 @@
 var tape = require('tape')
+var PATH_SEP = require('../codec').PATH_SEP
+var SUBKEY_SEP = require('../codec').SUBKEY_SEP
+var SUBKEY_SEPS = require('../codec').SUBKEY_SEPS
 
 var expected = [
   [[], 'foo'],
@@ -6,6 +9,22 @@ var expected = [
   [['foo', 'bar'], 'baz'],
   [['foo', 'bar'], 'blerg'],
   [['foobar'], 'barbaz'],
+]
+
+var expectedDecoded = [
+  [[], 'foo', PATH_SEP],
+  [['foo'], 'bar', PATH_SEP],
+  [['foo', 'bar'], 'baz', PATH_SEP],
+  [['foo', 'bar'], 'blerg', PATH_SEP],
+  [['foobar'], 'barbaz', PATH_SEP],
+]
+
+var others = [
+  [[], 'foo', SUBKEY_SEPS[1]],
+  [['foo'], 'bar', SUBKEY_SEPS[1]],
+  [['foo', 'bar'], 'baz', SUBKEY_SEPS[1]],
+  [['foo', 'bar'], 'blerg', SUBKEY_SEPS[1]],
+  [['foobar'], 'barbaz', SUBKEY_SEPS[1]],
 ]
 
 //compare two array items
@@ -46,7 +65,25 @@ module.exports = function (format) {
 
     console.log(actual)
 
-    t.deepEqual(actual, expected)
+    t.deepEqual(actual, expectedDecoded)
+
+    t.end()
+  })
+
+  tape('orderingOthers', function (t) {
+
+    others.sort(compare)
+
+    var actual =
+      others.slice()
+        .sort(random)
+        .map(format.encode)
+        .sort()
+        .map(format.decode)
+
+    console.log(actual)
+
+    t.deepEqual(actual, others)
 
     t.end()
   })
@@ -87,6 +124,22 @@ module.exports = function (format) {
 
     t.end()
   })
+  tape('SUBKEY_SEPS', function (t) {
+      format.SUBKEY_SEPS = ".!~"
+      t.equal(format.SUBKEY_SEPS, ".!~")
+      t.equal(format.SUBKEY_SEP, ".")
+      t.equal(format.escapeString("Hello~world!"), "Hello%7eworld%21")
+      t.equal(format.encode([["path"], "Key!ABC", "!"]), '/path!Key%21ABC')
+      t.equal(format.encode([["path"], "KeyABC", "!"]), '/path!KeyABC')
+      t.equal(format.encode([["path"], "!KeyABC", "!"]), '/path!%21KeyABC')
+      t.equal(format.encode([["path"], "!", "!"]), '/path!%21')
+      t.equal(format.encode([["path"], "", "!"]), '/path!')
+      t.equal(format.encode([["path"], "key"]), '/path.key')
+      t.deepEqual(format.decode('/path/Key!ABC'), [["path", "Key"], "ABC", "!"])
+      t.deepEqual(format.decode('/path/Key.ABC'), [["path", "Key"], "ABC", "/"])
+      t.end()
+  })
+
 }
 
 module.exports(require('../codec'))
