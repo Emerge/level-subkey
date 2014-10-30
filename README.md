@@ -36,12 +36,15 @@ you cannot run 7 on a database you created with 6_.
     * -1(nut.FILTER_STOPPED): stop.
 + supports subkey uses other separators, and you can change the default keys separator 
   * the default subkey's separator is "#" if no any separator provided.
+  * the others can have the subkeys too:
+    * '/path/key/.attribute/#subkey'
   * usage:
         var precodec = require('sublevel/codec')
         precodec.SUBKEY_SEPS = "#|~." //the first char is the default subkey separator, others are customize separator. 
         sublevel.put("some", "value", {separator: '|'})
         //list all key/value on separator "|"
-        sublevel.createReadStream({separator: '|'})
+        sublevel.createReadStream({separator: '.'})
+        //it will return all prefixed "." keys: {key: ".abc", value:....}
 
 * ![bug] the hooks may be memory leak when free sublevel.
   * https://github.com/dominictarr/level-sublevel/issues/38

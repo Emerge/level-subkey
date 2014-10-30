@@ -36,7 +36,9 @@ var a    = base.sublevel('A')
   var _a='AAA_'+Math.random(), _b= 'BBB_'+Math.random(), _c= 'CCC_'+Math.random()
   var _d = "DDD_2333"
 
-function filterEmpty(key, value)  {}
+function filterEmpty(key, value)  {
+    console.log("fe=", key)
+}
 
 tape('stream-separator-init', function (t) {
 
@@ -58,10 +60,12 @@ tape('stream-separator-init', function (t) {
     {key: '1.a', value: _a , type: 'put', separator: '.'},
     {key: '2.b', value: _b , type: 'put', separator: '.'},
     {key: '3.c', value: _c , type: 'put', separator: '.'},
+    {key: '3.d', value: _d , type: 'put', separator: '.'},
     {key: '3.cKey', value: _c , type: 'put'},
     {key: 'd4', value: _d+"4" , type: 'put'},
     {key: 'd5', value: _d+"5" , type: 'put'},
     {key: 'z6', value: _d+"6" , type: 'put'},
+    {key: 'abc', value: _c , type: 'put', path: "A/.3%2ec"},
   ], function (err) {
     if(err) throw err
     all(db, {}, function (err, obj) {
@@ -72,9 +76,11 @@ tape('stream-separator-init', function (t) {
           '/A#d4': _d+"4",
           '/A#d5': _d+'5',
           '/A#z6': _d+'6',
-          '/A.1%2ea': _a,
-          '/A.2%2eb': _b,
-          '/A.3%2ec': _c
+          '/A/.1%2ea': _a,
+          '/A/.2%2eb': _b,
+          '/A/.3%2ec': _c,
+          '/A/.3%2ec#abc': _c,
+          '/A/.3%2ed': _d
         })
  
         all(a, {}, function (err, obj) {
@@ -102,18 +108,21 @@ tape('stream-separator', function (t) {
           '/A#d4': _d+"4",
           '/A#d5': _d+'5',
           '/A#z6': _d+'6',
-          '/A.1%2ea': _a,
-          '/A.2%2eb': _b,
-          '/A.3%2ec': _c
+          '/A/.1%2ea': _a,
+          '/A/.2%2eb': _b,
+          '/A/.3%2ec': _c,
+          '/A/.3%2ec#abc': _c,
+          '/A/.3%2ed': _d
         })
         all(a, {separator:'.', filter: filterEmpty}, function (err, obj) {
           if(err) throw err
             console.log(obj)
           t.deepEqual(obj, 
             {
-              '1.a': _a,
-              '2.b': _b,
-              '3.c': _c
+              '.1.a': _a,
+              '.2.b': _b,
+              '.3.c': _c,
+              '.3.d': _d
             })
 
           t.end()

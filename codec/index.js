@@ -64,17 +64,26 @@ indexOfType = function(s) {
 exports.encode = function (e) {
   var vSeperator = SUBKEY_SEP
   if (e.length >= 3 && e[2]) {
-      vSeperator = e[2]
+      vSeperator = PATH_SEP + e[2]
   }
-  //console.log("encode:",PATH_SEP + e[0].join(PATH_SEP) + vSeperator + escapeString(e[1]))
+  //console.log("codec.encode:",PATH_SEP + e[0].join(PATH_SEP) + vSeperator + escapeString(e[1]))
   return PATH_SEP + e[0].join(PATH_SEP) + vSeperator + escapeString(e[1])
 }
 
-exports.decode = function (s) {
+//return [path, key, separator, realSeparator]
+//the realSeparator is optional, only (aSeparator && aSeparator !== seperator
+exports.decode = function (s, aSeparator) {
   var i = indexOfType(s)
   var vSep = s[i]
-  if (vSep === SUBKEY_SEP) vSep = PATH_SEP
-  return [s.substring(1, i).split(PATH_SEP).filter(Boolean), unescapeString(s.substring(i+1)), vSep]
+  if (vSep === SUBKEY_SEP) {
+      vSep = PATH_SEP
+  } else {
+      vSep = PATH_SEP + vSep
+  }
+  var vKey = unescapeString(s.substring(i+1))
+  var result = [s.substring(1, i).split(PATH_SEP).filter(Boolean).map(unescapeString), vKey, vSep]
+  if (isString(aSeparator) && aSeparator !== s[i]) result.push(s[i])
+  return result
 }
 
 exports.buffer = false

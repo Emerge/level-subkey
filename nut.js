@@ -13,6 +13,10 @@ function isString (f) {
   return 'string' === typeof f
 }
 
+function isObject (f) {
+  return f && 'object' === typeof f
+}
+
 function pathArrayToPath(aPath) {
     return PATH_SEP + aPath.join(PATH_SEP)
 }
@@ -74,12 +78,19 @@ exports = module.exports = function (db, precodec, codec) {
   }
 
   function decodeKeyWithOptions(key, opts) {
-      //v=[parent, key, Separator]
-      var v = precodec.decode(key)
+      //v=[parent, key, separator, realSeparator]
+      //realSeparator is optional only opts.separator && opts.separator != realSeparator
+      var v = precodec.decode(key, opts.separator)
+      var vSep = v[2]
+      if (vSep === undefined) vSep = PATH_SEP  //if the precodec is other codec.
       key = codec.decodeKey(v[1], opts);
       if (opts.absoluteKey) {
-          var vSep = v[2]
           key = pathArrayToPath(v[0]) + vSep + key
+      } else if (opts.path && isString(key) && key != "") {
+          key = path.relative(pathArrayToPath(opts.path), pathArrayToPath(v[0]) + vSep + key)
+      }
+      if (opts.separator && v.length >= 4) {
+          key = {key: key, separator: v[3]}
       }
       return key
   }
@@ -117,7 +128,6 @@ exports = module.exports = function (db, precodec, codec) {
         op.path = getPathArray(op.path)
         op._keyPath = resolveKeyPath(op.path, op.key)
         prehooks.trigger(op._keyPath, [op, add, ops])
-
         function add(op) {
           if(op === false) return delete ops[i]
           op._keyPath = resolveKeyPath(op.path, op.key)
@@ -174,20 +184,31 @@ exports = module.exports = function (db, precodec, codec) {
     pre: prehooks.add,
     post: posthooks.add,
     createDecoder: function (opts) {
+      function makeData(key, value) {
+          result = {}
+          if (key) {
+              key = decodeKeyWithOptions(key, opts)
+              if (isObject(key)) {
+                  result.key = key.key
+                  result.separator = key.separator
+              } else {
+                  result.key = key
+              }
+          }
+          if (value) result.value = codec.decodeValue(value, opts)
+          return result
+      }
       if(opts.keys !== false && opts.values !== false)
         return function (key, value) {
-          return {
-            key: decodeKeyWithOptions(key, opts),
-            value: codec.decodeValue(value, opts)
-          }
+          return makeData(key, value)
         }
       if(opts.values !== false)
         return function (_, value) {
-          return codec.decodeValue(value, opts)
+          return makeData(null, value)
         }
       if(opts.keys !== false)
         return function (key) {
-          return decodeKeyWithOptions(key, opts)
+          return makeData(key)
         }
       return function () {}
     },

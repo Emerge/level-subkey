@@ -168,11 +168,10 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
     opts.path = opts.path || prefix
 
     var isFilterExists = isFunction(opts.filter)
-    var vKeys, vValues
-    if (isFilterExists) {
-        vKeys = opts.keys, vValues = opts.values
+    var vKeys=opts.keys, vValues=opts.values
+    if (isFilterExists || opts.separator) {
         opts.keys = true
-        opts.values = true
+        if (isFilterExists) opts.values = true
     }
 
     var stream
@@ -183,21 +182,36 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
     stream = createStream(opts, nut.createDecoder(opts))
     if(it) stream.setIterator(it)
 
-    if (isFilterExists) {
+
+    //to avoid the stream is a pull-stream
+    if (!stream.type) {
         var filterStream = through(function(item){
-            switch (opts.filter(item.key, item.value)) {
-                case  FILTER_EXCLUDED: break        //exclude
-                case  FILTER_STOPPED : this.end()//this.emit('end')   //halt
-                default:
+            if (opts.separator) {
+                if (item.separator === SUBKEY_SEP) return
+                if (!isFilterExists) {
                     if (vKeys !== false && vValues !== false) {
-                        //this.emit('data',item)
                         this.push(item)
                     } else {
-                        if (vKeys !== false)  this.push(item.key)//this.emit('data',item.key)
-                        if (vValues !== false) this.push(item.value)//this.emit('data',item.value)
+                        if (vKeys !== false)  this.push(item.key)
+                        if (vValues !== false) this.push(item.value)
                     }
+                    return
+                }
             }
-        })
+            if (isFilterExists) switch (opts.filter(item.key, item.value)) {
+                case  FILTER_EXCLUDED: return        //exclude
+                case  FILTER_STOPPED : this.end()//this.emit('end')   //halt
+                                       return
+            }
+            if (vKeys !== false && vValues !== false) {
+                //this.emit('data',item)
+                this.push(item)
+            } else {
+                if (vKeys !== false)  this.emit('data',item.key)
+                if (vValues !== false) this.push(item.value)//this.emit('data',item.value)
+            }
+        }, null)
+        filterStream.writable = false
         stream = stream.pipe(filterStream)
     }
 

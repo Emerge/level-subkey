@@ -168,7 +168,6 @@ function stream (db) {
 
     db.batch(batch, function (err) {
       if(err) throw err
-
       pull(db.createReadStream(), pull.collect(function (err, ary) {
         if(err) throw err
         console.log(ary)
@@ -181,10 +180,12 @@ function stream (db) {
 
 
 var tests = [
+/*
   prehookPut,
   prehookBatch,
   createPostHooks,
   rmHook,
+  */
   stream
 ]
 
