@@ -169,9 +169,9 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
 
     var isFilterExists = isFunction(opts.filter)
     var vKeys=opts.keys, vValues=opts.values
-    if (isFilterExists || opts.separator) {
+    if (isFilterExists) {
         opts.keys = true
-        if (isFilterExists) opts.values = true
+        opts.values = true
     }
 
     var stream
@@ -184,21 +184,9 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
 
 
     //to avoid the stream is a pull-stream
-    if (!stream.type) {
+    if (!stream.type && isFilterExists) {
         var filterStream = through(function(item){
-            if (opts.separator) {
-                if (item.separator === SUBKEY_SEP) return
-                if (!isFilterExists) {
-                    if (vKeys !== false && vValues !== false) {
-                        this.push(item)
-                    } else {
-                        if (vKeys !== false)  this.push(item.key)
-                        if (vValues !== false) this.push(item.value)
-                    }
-                    return
-                }
-            }
-            if (isFilterExists) switch (opts.filter(item.key, item.value)) {
+            switch (opts.filter(item.key, item.value)) {
                 case  FILTER_EXCLUDED: return        //exclude
                 case  FILTER_STOPPED : this.end()//this.emit('end')   //halt
                                        return
@@ -207,7 +195,7 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
                 //this.emit('data',item)
                 this.push(item)
             } else {
-                if (vKeys !== false)  this.emit('data',item.key)
+                if (vKeys !== false)  this.push(item.key)
                 if (vValues !== false) this.push(item.value)//this.emit('data',item.value)
             }
         }, null)

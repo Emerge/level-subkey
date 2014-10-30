@@ -13,6 +13,7 @@ for real-time changing data.
 
 ## level-sublevel@7 **BREAKING CHANGES** via Riceball LEE
 
+* broken compatibility totally from v8.0.0.
 * dynamic sublevels
 * the keys are _encoded_ has changed, and _this means
 you cannot run 7 on a database you created with 6_.
@@ -34,17 +35,19 @@ you cannot run 7 on a database you created with 6_.
     *  0(nut.FILTER_INCLUDED): include this item
     *  1(nut.FILTER_EXCLUDED): exclude
     * -1(nut.FILTER_STOPPED): stop.
-+ supports subkey uses other separators, and you can change the default keys separator 
++ supports subkey uses other separators, and you can change the default keys separator
+  * the '%' can not be used as separator.
   * the default subkey's separator is "#" if no any separator provided.
   * the others can have the subkeys too:
     * '/path/key/.attribute/#subkey'
+    * optimalize performance for searching, use the new SUBKEY_SEPS design.
   * usage:
         var precodec = require('sublevel/codec')
-        precodec.SUBKEY_SEPS = "#|~." //the first char is the default subkey separator, others are customize separator. 
+        precodec.SUBKEY_SEPS = ["/|-", "#.+"] //the first char is the default subkey separator, others are customize separator. 
         sublevel.put("some", "value", {separator: '|'})
         //list all key/value on separator "|"
         sublevel.createReadStream({separator: '.'})
-        //it will return all prefixed "." keys: {key: ".abc", value:....}
+        //it will return all prefixed "|" keys: {key: "|abc", value:....}
 
 * ![bug] the hooks may be memory leak when free sublevel.
   * https://github.com/dominictarr/level-sublevel/issues/38
@@ -56,39 +59,6 @@ you cannot run 7 on a database you created with 6_.
 * Key
 * Key attributes
 
-
-## level-sublevel@6 **BREAKING CHANGES**
-
-The long awaited `level-sublevel` rewrite is out!
-You are hearby warned this is a _significant breaking_ change.
-So it's good to use it with a new project,
-The user api is _mostly_ the same as before,
-but the way that keys are _encoded_ has changed, and _this means
-you cannot run 6 on a database you created with 5_.
-
-Also, `createWriteStream` has been removed, in anticipation of [this
-change](https://github.com/rvagg/node-levelup/pull/207) use something
-like [level-write-stream](https://github.com/Raynos/level-write-stream)
-
-### Legacy Mode
-
-Using leveldb with legacy mode is the simplest way to get the new sublevel
-on top of a database that used old sublevel. Simply require sublevel like this:
-
-``` js
-var level = require('level')
-                                   //  V *** require legacy.js ***
-var sublevel = require('level-sublevel/legacy')
-var db = sublevel(level(path))
-
-```
-
-### Migration Tool
-
-@calvinmetcalf has created a migration tool:
-[sublevel-migrate](https://github.com/calvinmetcalf/sublevel-migrate)
-
-This can be used to copy an old level-sublevel into the new format.
 
 ## Stability
 

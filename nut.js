@@ -89,9 +89,10 @@ exports = module.exports = function (db, precodec, codec) {
       } else if (opts.path && isString(key) && key != "") {
           key = path.relative(pathArrayToPath(opts.path), pathArrayToPath(v[0]) + vSep + key)
       }
+      /*
       if (opts.separator && v.length >= 4) {
           key = {key: key, separator: v[3]}
-      }
+      }*/
       return key
   }
   function addEncodings(op, aParent) {
@@ -200,15 +201,18 @@ exports = module.exports = function (db, precodec, codec) {
       }
       if(opts.keys !== false && opts.values !== false)
         return function (key, value) {
-          return makeData(key, value)
+          return {
+              key: decodeKeyWithOptions(key, opts),
+              value: codec.decodeValue(value, opts)
+          }
         }
       if(opts.values !== false)
         return function (_, value) {
-          return makeData(null, value)
+          return codec.decodeValue(value, opts)
         }
       if(opts.keys !== false)
         return function (key) {
-          return makeData(key)
+          return decodeKeyWithOptions(key, opts)
         }
       return function () {}
     },
@@ -266,6 +270,7 @@ exports = module.exports = function (db, precodec, codec) {
 
 exports.getPathArray = getPathArray
 exports.pathArrayToPath = pathArrayToPath
+exports.pathToPathArray = pathToPathArray
 exports.resolveKeyPath = resolveKeyPath
 exports.FILTER_INCLUDED =  0
 exports.FILTER_EXCLUDED =  1

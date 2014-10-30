@@ -1,10 +1,19 @@
 var level = require('level-test')()
+var path  = require("path")
 var sublevel = require('../')
+var precodec = require('../codec')
+
 var _nut = require('../nut')
-var FILTER_EXCLUDED = _nut.FILTER_EXCLUDED
-var FILTER_STOPPED = _nut.FILTER_STOPPED
 var tape = require('tape')
 
+var FILTER_EXCLUDED = _nut.FILTER_EXCLUDED
+var FILTER_STOPPED = _nut.FILTER_STOPPED
+var getPathArray = _nut.getPathArray
+var resolveKeyPath = _nut.resolveKeyPath
+var pathArrayToPath = _nut.pathArrayToPath
+var pathToPathArray = _nut.pathToPathArray
+var SUBKEY_SEPS = precodec.SUBKEY_SEPS
+var encode = precodec.encode
 
 require('rimraf').sync('/tmp/test-sublevel-readstream-separator')
 
@@ -12,6 +21,14 @@ var db = level('test-sublevel-readstream-separator')
 var base = sublevel(db)
 
 var a    = base.sublevel('A')
+
+function encodeKey(s, separator) {
+    var p = path.dirname(s), k=path.basename(s)
+    p = [pathToPathArray(p)]
+    p.push(k)
+    if (separator) p.push(separator)
+    return encode(p)
+}
 
   function all(db, opts, cb) {
     var o
@@ -37,11 +54,23 @@ var a    = base.sublevel('A')
   var _d = "DDD_2333"
 
 function filterEmpty(key, value)  {
-    console.log("fe=", key)
+    //console.log("fe=", key)
 }
+
+var expectedResults = {}
+expectedResults[encodeKey('/A/3.cKey')] = _c
+expectedResults[encodeKey('/A/d4')] = _d+"4"
+expectedResults[encodeKey('/A/d5')] = _d+"5"
+expectedResults[encodeKey('/A/z6')] = _d+"6"
+expectedResults[encodeKey('/A/.1.a')] = _a
+expectedResults[encodeKey('/A/.2.b', '.')] = _b
+expectedResults[encodeKey('/A/.3.c', '.')] = _c
+expectedResults[encodeKey('/A/.3.d', '.')] = _d
+expectedResults[encodeKey('/A/.3.c/abc')] = _c
 
 tape('stream-separator-init', function (t) {
 
+console.log(expectedResults)
   var i = 0
 
 
@@ -65,23 +94,12 @@ tape('stream-separator-init', function (t) {
     {key: 'd4', value: _d+"4" , type: 'put'},
     {key: 'd5', value: _d+"5" , type: 'put'},
     {key: 'z6', value: _d+"6" , type: 'put'},
-    {key: 'abc', value: _c , type: 'put', path: "A/.3%2ec"},
+    {key: 'abc', value: _c , type: 'put', path: "A/.3.c"},
   ], function (err) {
     if(err) throw err
     all(db, {}, function (err, obj) {
       if(err) throw err
-      t.deepEqual(obj, 
-        {
-          '/A#3%2ecKey': _c,
-          '/A#d4': _d+"4",
-          '/A#d5': _d+'5',
-          '/A#z6': _d+'6',
-          '/A/.1%2ea': _a,
-          '/A/.2%2eb': _b,
-          '/A/.3%2ec': _c,
-          '/A/.3%2ec#abc': _c,
-          '/A/.3%2ed': _d
-        })
+      t.deepEqual(obj, expectedResults)
  
         all(a, {}, function (err, obj) {
           if(err) throw err
@@ -102,18 +120,7 @@ tape('stream-separator-init', function (t) {
 tape('stream-separator', function (t) {
     all(db, {}, function (err, obj) {
       if(err) throw err
-      t.deepEqual(obj, 
-        {
-          '/A#3%2ecKey': _c,
-          '/A#d4': _d+"4",
-          '/A#d5': _d+'5',
-          '/A#z6': _d+'6',
-          '/A/.1%2ea': _a,
-          '/A/.2%2eb': _b,
-          '/A/.3%2ec': _c,
-          '/A/.3%2ec#abc': _c,
-          '/A/.3%2ed': _d
-        })
+      t.deepEqual(obj, expectedResults)
         all(a, {separator:'.', filter: filterEmpty}, function (err, obj) {
           if(err) throw err
             console.log(obj)

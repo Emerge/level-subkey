@@ -1,6 +1,7 @@
 var levelup = require('level-test')()
 
-var base = require('../')(levelup('test-sublevel-path'))
+var db = levelup('test-sublevel-path')
+var base = require('../')(db)
 
 var test = require('tape')
 
@@ -18,6 +19,7 @@ test('sublevel-path-get', function (t) {
     { key: '../bar/b', value: 5, type: 'put', path: "foo"},
     //into the main base
     { key: 'b', value: 5, type: 'put', path: '/'},
+    { key: '.b', value: 6, type: 'put', path: "bar" },
   ], function (err) {
     if (err) throw(err)
     bar.get("b", function(err, v){
@@ -36,7 +38,15 @@ test('sublevel-path-get', function (t) {
                 foo.get('a', function(err,v){
                     if (err) throw(err)
                     t.equal(v, '1')
-                    t.end()
+                    bar.get('.b', function(err,v){
+                      if (err) throw(err)
+                      t.equal(v, '6')
+                      db.get('/bar/!b', function(err,v){
+                          if (err) throw(err)
+                          t.equal(v, '6')
+                          t.end()
+                      })
+                    })
                 })
             })
           })
