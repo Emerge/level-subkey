@@ -165,7 +165,7 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
 
   emitter.createReadStream = function (opts) {
     opts = mergeOpts(opts)
-    opts.path = opts.path || prefix
+    opts.path = getPathArray(opts.path) || prefix
 
     var isFilterExists = isFunction(opts.filter)
     var vKeys=opts.keys, vValues=opts.values

@@ -21,6 +21,7 @@ var db = level('test-sublevel-readstream-separator')
 var base = sublevel(db)
 
 var a    = base.sublevel('A')
+var b    = base.sublevel('B')
 
 function encodeKey(s, separator) {
     var p = path.dirname(s), k=path.basename(s)
@@ -122,6 +123,26 @@ tape('stream-separator', function (t) {
       if(err) throw err
       t.deepEqual(obj, expectedResults)
         all(a, {separator:'.', filter: filterEmpty}, function (err, obj) {
+          if(err) throw err
+            console.log(obj)
+          t.deepEqual(obj, 
+            {
+              '.1.a': _a,
+              '.2.b': _b,
+              '.3.c': _c,
+              '.3.d': _d
+            })
+
+          t.end()
+        })
+    })
+})
+
+tape('stream-path', function (t) {
+    all(db, {}, function (err, obj) {
+      if(err) throw err
+      t.deepEqual(obj, expectedResults)
+        all(b, {path:'/A', separator:'.'}, function (err, obj) {
           if(err) throw err
             console.log(obj)
           t.deepEqual(obj, 
