@@ -68,6 +68,8 @@ expectedResults[encodeKey('/A/.2.b', '.')] = _b
 expectedResults[encodeKey('/A/.3.c', '.')] = _c
 expectedResults[encodeKey('/A/.3.d', '.')] = _d
 expectedResults[encodeKey('/A/.3.c/abc')] = _c
+expectedResults[encodeKey('/A/@a', '')] = _d+"7"
+expectedResults[encodeKey('/A/@b')] = _d+"8"
 
 tape('stream-separator-init', function (t) {
 
@@ -96,6 +98,8 @@ console.log(expectedResults)
     {key: 'd5', value: _d+"5" , type: 'put'},
     {key: 'z6', value: _d+"6" , type: 'put'},
     {key: 'abc', value: _c , type: 'put', path: "A/.3.c"},
+    {key: '@a', value: _d+"7" , type: 'put'},
+    {key: '@b', value: _d+"8" , type: 'put'},
   ], function (err) {
     if(err) throw err
     all(db, {}, function (err, obj) {
@@ -151,6 +155,24 @@ tape('stream-path', function (t) {
               '.2.b': _b,
               '.3.c': _c,
               '.3.d': _d
+            })
+
+          t.end()
+        })
+    })
+})
+
+tape('stream-path2', function (t) {
+    all(db, {}, function (err, obj) {
+      if(err) throw err
+      t.deepEqual(obj, expectedResults)
+        all(b, {path:'/A', separator:"@"}, function (err, obj) {
+          if(err) throw err
+            console.log(obj)
+          t.deepEqual(obj, 
+            {
+              '@a': _d+"7",
+              '@b': _d+"8"
             })
 
           t.end()

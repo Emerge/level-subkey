@@ -1,4 +1,4 @@
-var path = require('path')
+var path = require('./path')
 var hooks = require('./hooks')
 var ltgt = require('ltgt')
 var precodec = require('./codec')
@@ -34,18 +34,18 @@ function getPathArray (aPath) {
   if(aPath == null) return aPath
   //is a sublevel object?
   if(isFunction(aPath.pathAsArray)) return aPath.pathAsArray()
-  if(isString(aPath) && aPath.length) return pathToPathArray(aPath)
+  if(isString(aPath)) return pathToPathArray(aPath)
   //is a path array:
   return aPath
 }
 
 function resolveKeyPath(aPathArray, aKey) {
     if (isString(aKey) && aKey.length) {
-        var vPath = pathArrayToPath(aPathArray)
-        vPath = path.resolve(vPath, aKey)
-        aKey = path.basename(vPath)
-        vPath = path.dirname(vPath)
-        return [pathToPathArray(vPath), aKey]
+        //var vPath = pathArrayToPath(aPathArray)
+        var vPath = path.resolveArray(aPathArray, aKey)
+        var isAbsolutePath = vPath.shift(0,1)
+        aKey = vPath.pop()
+        return [vPath, aKey]
     }
     else
         return [aPathArray, aKey]
@@ -111,16 +111,34 @@ exports = module.exports = function (db, precodec, codec) {
       waiting.shift()()
   }
 
-  if(isFunction(db.isOpen)) {
-    if(db.isOpen())
-      ready = true
-    else
-      db.open(start)
-  } else {
-    db.open(start)
+  function openDB(cb) {
+      if (isFunction(cb)) waiting.push(cb)
+      if(isFunction(db.isOpen)) {
+        if(db.isOpen())
+          ready = true
+        else
+          db.open(start)
+      } else {
+        db.open(start)
+      }
   }
+  openDB()
 
   return {
+    isOpen: function(){
+        var result = db.isOpen()
+        return result
+    },
+    open: openDB,
+    close: function(cb) {
+        return db.close(cb)
+    },
+    on: function() {
+        db.on.appy(db)
+    },
+    once: function() {
+        db.once.apply(db)
+    },
     apply: function (ops, opts, cb) {
       //apply prehooks here.
       for(var i = 0; i < ops.length; i++) {

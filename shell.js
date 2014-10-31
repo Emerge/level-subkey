@@ -1,4 +1,4 @@
-var path = require("path")
+var path = require("./path")
 var through = require("through")
 var EventEmitter = require('events').EventEmitter
 var addpre = require('./range').addPrefix
@@ -15,6 +15,8 @@ var resolveKeyPath = _nut.resolveKeyPath
 var pathArrayToPath = _nut.pathArrayToPath
 
 var errors = require('levelup/lib/errors')
+var WriteStream = require('levelup/lib/write-stream')
+
 
 function isFunction (f) {
   return 'function' === typeof f
@@ -46,6 +48,8 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
   emitter.version = version
 
   emitter.methods = {}
+  emitter.unhooks = []
+
   prefix = prefix || []
 
   function errback (err) { if (err) emitter.emit('error', err) }
@@ -63,14 +67,19 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
     return o
   }
 
+  //emitter.on = nut.on
+  //emitter.once = nut.once
+  //the writeStream use db.isOpen and db.once('ready') to ready write stream.
+  emitter.isOpen = function(){return nut.isOpen()}
   emitter.put = function (key, value, opts, cb) {
     if('function' === typeof opts) cb = opts, opts = {}
     if(!cb) cb = errback
+    var vPath = isString(opts.path) && opts.path.length ? getPathArray(opts.path): prefix
 
     nut.apply([{
       separator: opts.separator,
       key: key, value: value,
-      path: prefix.slice(), type: 'put'
+      path: vPath, type: 'put'
     }], mergeOpts(opts), function (err) {
       if(!err) { emitter.emit('put', key, value); cb(null) }
       if(err) return cb(err)
@@ -98,11 +107,12 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
   emitter.del = function (key, opts, cb) {
     if('function' === typeof opts) cb = opts, opts = {}
     if(!cb) cb = errback
+    var vPath = isString(opts.path) && opts.path.length ? getPathArray(opts.path): prefix
 
     nut.apply([{
       separator: opts.separator,
       key: key,
-      path: prefix.slice(), type: 'del'
+      path: vPath, type: 'del'
     }], mergeOpts(opts), function (err) {
       if(!err) { emitter.emit('del', key); cb(null) }
       if(err) return cb(err)
@@ -113,13 +123,14 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
     if('function' === typeof opts)
       cb = opts, opts = {}
     if(!cb) cb = errback
-
+    var vPath = isString(opts.path) && opts.path.length ? getPathArray(opts.path): prefix
     ops = ops.map(function (op) {
       return {
         separator:     op.separator,
         key:           op.key,
         value:         op.value,
-        path:        op.path || prefix,
+        path:          op.path || vPath,
+        separator:     op.separator,
         keyEncoding:   op.keyEncoding,    // *
         valueEncoding: op.valueEncoding,  // * (TODO: encodings on sublevel)
         type:          op.type
@@ -135,7 +146,9 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
   emitter.get = function (key, opts, cb) {
     if('function' === typeof opts)
       cb = opts, opts = {}
-    nut.get(key, prefix, mergeOpts(opts), function (err, value) {
+    var vPath = isString(opts.path) ? getPathArray(opts.path): prefix
+    if (opts.path) opts.path = getPathArray(opts.path)
+    nut.get(key, vPath, mergeOpts(opts), function (err, value) {
       if(err) cb(new errors.NotFoundError('Key not found in database', err))
       else cb(null, value)
     })
@@ -156,11 +169,23 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
   }
 
   emitter.pre = function (key, hook) {
-      return _addHook(key, hook, nut.pre)
+      var unhook = _addHook(key, hook, nut.pre)
+      this.unhooks.push(unhook)
+      return function() {
+          var i = this.unhooks.indexOf(unhook)
+          if (~i) this.unhooks.splice(i, 1)
+          return unhook()
+      }
   }
 
   emitter.post = function (key, hook) {
-      return _addHook(key, hook, nut.post)
+      var unhook = _addHook(key, hook, nut.post)
+      this.unhooks.push(unhook)
+      return function() {
+          var i = this.unhooks.indexOf(unhook)
+          if (~i) this.unhooks.splice(i, 1)
+          return unhook()
+      }
   }
 
   emitter.createReadStream = function (opts) {
@@ -220,9 +245,23 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
     return emitter.createReadStream(opts)
   }
 
+  emitter.createWriteStream = function(opts) {
+    opts = mergeOpts(opts)
+    return new WriteStream(opts, emitter)
+  }
+
+  emitter.open = function (cb) {
+      nut.open(cb)
+  }
   emitter.close = function (cb) {
-    //TODO: deregister all hooks
-    process.nextTick(cb || function () {})
+    //deregister all hooks
+    var unhooks = this.unhooks
+    for (var i=0;i< unhooks.length; i++) {
+        unhooks[i]()
+    }
+    this.unhooks = []
+    nut.close(cb)
+    //process.nextTick(cb || function () {})
   }
 
   return emitter

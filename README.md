@@ -48,9 +48,11 @@ you cannot run 7 on a database you created with 6_.
         //list all key/value on separator "|"
         sublevel.createReadStream({separator: '.'})
         //it will return all prefixed "|" keys: {key: "|abc", value:....}
-
-* ![bug] the hooks may be memory leak when free sublevel.
++ createWriteStream supports
+  * Note: the writeStream do not support the options.path, options.separator parameters. 
+* [bug] fixed the hooks may be memory leak when free sublevel.
   * https://github.com/dominictarr/level-sublevel/issues/38
+  * sublevel.close will deregister hooks now.
 
 
 ## Main Concepts
@@ -109,10 +111,18 @@ animal.put("../plant/cucumber", value, function (err) {})
 db.put("/stuff/animal/pig", value, function(err){})
 db.get("/stuff/animal/pig", function(err, value){})
 
-//list all keys in "/stuff/animal" path
+//put pig's attribute as key/value
+db.put("/stuff/animal/pig/.mouth", value, function(err){})
+db.put("/stuff/animal/pig/.ear", value, function(err){})
+
+//list all pig's attributes
+db.createReadStream({path: "/stuff/animal/pig", separator="."})
+//return: {key:".mouth", value:value}, {key:".ear", value:value}
+
+//list all keys in "/stuff/animal"
 db.createReadStream({path: "/stuff/animal"})
 
-//list all keys in "/stuff/plant" path
+//list all keys in "/stuff/plant"
 animal.createReadStream({start: "../plant"})
 
 //crazy usage:
