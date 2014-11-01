@@ -188,7 +188,7 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
       }
   }
 
-  emitter.createReadStream = function (opts) {
+  emitter.readStream = emitter.createReadStream = function (opts) {
     opts = mergeOpts(opts)
     opts.path = getPathArray(opts.path) || prefix
 
@@ -228,28 +228,33 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
     return stream
   }
 
-  emitter.createValueStream = function (opts) {
+  emitter.valueStream = emitter.createValueStream = function (opts) {
     opts = opts || {}
     opts.values = true
     opts.keys = false
     return emitter.createReadStream(opts)
   }
 
-  emitter.createKeyStream = function (opts) {
+  emitter.keyStream = emitter.createKeyStream = function (opts) {
     opts = opts || {}
     opts.values = false
     opts.keys = true
     return emitter.createReadStream(opts)
   }
 
-  emitter.createWriteStream = function(opts) {
+  emitter.writeStream = emitter.createWriteStream = function(opts) {
     opts = mergeOpts(opts)
     return new WriteStream(opts, emitter)
   }
-
+  emitter.findStream = emitter.createFindStream = function(opts) {
+    opts = mergeOpts(opts)
+    return new WriteStream(opts, emitter)
+  }
+  /*
   emitter.open = function (cb) {
       nut.open(cb)
   }
+  */
   emitter.close = function (cb) {
     //deregister all hooks
     var unhooks = this.unhooks
