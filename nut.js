@@ -87,7 +87,8 @@ exports = module.exports = function (db, precodec, codec) {
       if (opts.absoluteKey) {
           key = pathArrayToPath(v[0]) + vSep + key
       } else if (opts.path && isString(key) && key != "") {
-          key = path.relative(pathArrayToPath(opts.path), pathArrayToPath(v[0]) + vSep + key)
+          vSep = vSep.substring(1)
+          key = path.relative(opts.path, v[0]) + vSep + key
       }
       /*
       if (opts.separator && v.length >= 4) {
@@ -244,6 +245,8 @@ exports = module.exports = function (db, precodec, codec) {
         return encodePath(resolveKeyPath(vPath, key), opts, {})
       }
 
+      //convert the lower/upper bounds to real lower/upper bounds.
+      //precodec.lowerBound, precodec.upperBound are default bounds in case of the opts have no bounds.
       ltgt.toLtgt(opts, opts, encodeKey, precodec.lowerBound, precodec.upperBound)
 
       //opts.path = null
@@ -265,8 +268,14 @@ exports = module.exports = function (db, precodec, codec) {
 
       function wrapIterator (iterator) {
         return {
+          // cb(err, key, value): halt when key && value are both undefined
           next: function (cb) {
-            return iterator.next(cb)
+              return iterator.next(function(err, key, value){
+                  if (!err && (key !== undefined || value !== undefined)) {
+                    this.last = key
+                  }
+                  return cb(err, key, value)
+              })
           },
           end: function (cb) {
             iterator.end(cb)
