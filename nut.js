@@ -70,7 +70,8 @@ exports = module.exports = function (db, precodec, codec) {
   //aKeyPath=[path, key]
   function encodePath(aKeyPath, opts, op) {
     var vSep = (op && op.separator) || (opts && opts.separator)
-    return precodec.encode([ aKeyPath[0], codec.encodeKey(aKeyPath[1], opts, op ), vSep])
+    var vSepRaw = (op && op.separatorRaw) || (opts && opts.separatorRaw)
+    return precodec.encode([ aKeyPath[0], codec.encodeKey(aKeyPath[1], opts, op ), vSep, vSepRaw])
   }
 
   function decodePath(data) {
@@ -81,14 +82,16 @@ exports = module.exports = function (db, precodec, codec) {
       //v=[parent, key, separator, realSeparator]
       //realSeparator is optional only opts.separator && opts.separator != realSeparator
       var v = precodec.decode(key, opts.separator)
-      var vSep = v[2]
+      var vSep = v[2] //separator
       if (vSep === undefined) vSep = PATH_SEP  //if the precodec is other codec.
       key = codec.decodeKey(v[1], opts);
       if (opts.absoluteKey) {
           key = pathArrayToPath(v[0]) + vSep + key
       } else if (opts.path && isString(key) && key != "") {
-          vSep = vSep.substring(1)
-          key = path.relative(opts.path, v[0]) + vSep + key
+          var vPath = path.relative(opts.path, v[0])
+          if (vPath == "" && vSep === PATH_SEP) vSep = ""
+          else if (vSep.length >= 2) vSep = vSep.substring(1)
+          key = vPath + vSep + key
       }
       /*
       if (opts.separator && v.length >= 4) {
@@ -245,9 +248,11 @@ exports = module.exports = function (db, precodec, codec) {
         return encodePath(resolveKeyPath(vPath, key), opts, {})
       }
 
-      //convert the lower/upper bounds to real lower/upper bounds.
-      //precodec.lowerBound, precodec.upperBound are default bounds in case of the opts have no bounds.
-      ltgt.toLtgt(opts, opts, encodeKey, precodec.lowerBound, precodec.upperBound)
+      if (opts.bounded !== false) {
+        //convert the lower/upper bounds to real lower/upper bounds.
+        //precodec.lowerBound, precodec.upperBound are default bounds in case of the opts have no bounds.
+        ltgt.toLtgt(opts, opts, encodeKey, precodec.lowerBound, precodec.upperBound)
+      }
       if (opts.next) {
           if (opts.reverse !== true) {
             opts.gt = opts.next
@@ -296,15 +301,14 @@ exports = module.exports = function (db, precodec, codec) {
           }
         }
       }
-      var vDb = db.db || db
       if(ready) {
-        var result = wrapIterator(vDb.iterator(opts))
+        var result = wrapIterator((db.db || db).iterator(opts))
         cb(null, result)
         return result
       }
       else {
         waiting.push(function () {
-          cb(null, wrapIterator(vDb.iterator(opts)))
+          cb(null, wrapIterator((db.db || db).iterator(opts)))
         })
       }
 

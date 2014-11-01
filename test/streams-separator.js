@@ -14,6 +14,9 @@ var pathArrayToPath = _nut.pathArrayToPath
 var pathToPathArray = _nut.pathToPathArray
 var SUBKEY_SEPS = precodec.SUBKEY_SEPS
 var encode = precodec.encode
+var SEP1 = SUBKEY_SEPS[0][1]
+var SEP2 = SUBKEY_SEPS[0][2]
+var SEP22= SUBKEY_SEPS[1][2]
 
 require('rimraf').sync('/tmp/test-sublevel-readstream-separator')
 
@@ -22,6 +25,7 @@ var base = sublevel(db)
 
 var a    = base.sublevel('A')
 var b    = base.sublevel('B')
+var stuff= base.sublevel('stuff')
 
 function encodeKey(s, separator) {
     var p = path.dirname(s), k=path.basename(s)
@@ -68,8 +72,15 @@ expectedResults[encodeKey('/A/.2.b', '.')] = _b
 expectedResults[encodeKey('/A/.3.c', '.')] = _c
 expectedResults[encodeKey('/A/.3.d', '.')] = _d
 expectedResults[encodeKey('/A/.3.c/abc')] = _c
-expectedResults[encodeKey('/A/@a', '')] = _d+"7"
-expectedResults[encodeKey('/A/@b')] = _d+"8"
+expectedResults[encodeKey('/A/'+SEP2+'a', '')] = _d+"7"
+expectedResults[encodeKey('/A/'+SEP2+'b')] = _d+"8"
+expectedResults[encodeKey('/A/B/123')] = _c
+expectedResults[encodeKey('/A/plan/ahello')] = _c
+expectedResults[encodeKey('/A/0/13/nest/aw')] = _c
+expectedResults[encodeKey('/stuff/animal/pig')] = _c
+expectedResults[encodeKey('/stuff/animal/pig/.mouth')] = _c
+expectedResults[encodeKey('/stuff/animal/pig/.ear')] = _c
+expectedResults[encodeKey('/stuff/plant/cucumber')] = _c
 
 tape('stream-separator-init', function (t) {
 
@@ -98,8 +109,15 @@ console.log(expectedResults)
     {key: 'd5', value: _d+"5" , type: 'put'},
     {key: 'z6', value: _d+"6" , type: 'put'},
     {key: 'abc', value: _c , type: 'put', path: "A/.3.c"},
-    {key: '@a', value: _d+"7" , type: 'put'},
-    {key: '@b', value: _d+"8" , type: 'put'},
+    {key: SEP2+'a', value: _d+"7" , type: 'put'},
+    {key: SEP2+'b', value: _d+"8" , type: 'put'},
+    {key: '123', value: _c , type: 'put', path: "A/B"},
+    {key: 'ahello', value: _c , type: 'put', path: "A/plan"},
+    {key: 'aw', value: _c , type: 'put', path: "A/0/13/nest"},
+    {key: '/stuff/animal/pig', value: _c , type: 'put'},
+    {key: '/stuff/plant/cucumber', value: _c , type: 'put'},
+    {key: '/stuff/animal/pig/.mouth', value: _c , type: 'put'},
+    {key: '/stuff/animal/pig/.ear', value: _c , type: 'put'},
   ], function (err) {
     if(err) throw err
     all(db, {}, function (err, obj) {
@@ -166,16 +184,81 @@ tape('stream-path2', function (t) {
     all(db, {}, function (err, obj) {
       if(err) throw err
       t.deepEqual(obj, expectedResults)
-        all(b, {path:'/A', separator:"@"}, function (err, obj) {
+        all(b, {path:'/A', separator:SEP2}, function (err, obj) {
           if(err) throw err
             console.log(obj)
-          t.deepEqual(obj, 
-            {
-              '@a': _d+"7",
-              '@b': _d+"8"
-            })
+            o = {}
+            o[SEP2+'a'] = _d+"7"
+            o[SEP2+'b'] = _d+"8"
+          t.deepEqual(obj, o)
 
           t.end()
+        })
+    })
+})
+
+tape('stream-path-separatorRaw', function (t) {
+    all(db, {}, function (err, obj) {
+      if(err) throw err
+      t.deepEqual(obj, expectedResults)
+        all(b, {path:'/A', separator:SEP22, separatorRaw: true}, function (err, obj) {
+          if(err) throw err
+            console.log(obj)
+            o = {}
+            o[SEP2+'a'] = _d+"7"
+            o[SEP2+'b'] = _d+"8"
+          t.deepEqual(obj, o)
+
+
+          t.end()
+        })
+    })
+})
+
+tape('stream-path-separatorRaw-start', function (t) {
+    all(db, {}, function (err, obj) {
+      if(err) throw err
+      t.deepEqual(obj, expectedResults)
+        all(b, {path:'/A', separator:'/', separatorRaw: true, start:'0'}, function (err, obj) {
+          if(err) throw err
+          console.log(obj)
+          t.deepEqual(obj, 
+            { '0/13/nest/aw': _c, 'B/123': _c, 'plan/ahello': _c }
+          )
+
+            all(a, {separator:'/', separatorRaw: true, start:'0'}, function (err, obj) {
+              if(err) throw err
+              console.log(obj)
+              t.deepEqual(obj, 
+                { '0/13/nest/aw': _c, 'B/123': _c, 'plan/ahello': _c }
+              )
+
+              t.end()
+            })
+        })
+    })
+})
+
+tape('stream-path-separatorRaw-start2', function (t) {
+    all(db, {}, function (err, obj) {
+      if(err) throw err
+      t.deepEqual(obj, expectedResults)
+        all(b, {path:'/stuff', separator:'/', separatorRaw: true, start:'0'}, function (err, obj) {
+          if(err) throw err
+          console.log(obj)
+          t.deepEqual(obj, 
+                { 'animal/pig': _c, 'animal/pig.ear': _c, 'animal/pig.mouth': _c, 'plant/cucumber': _c}
+          )
+
+            all(stuff, {separator:'/', separatorRaw: true, start:'0'}, function (err, obj) {
+              if(err) throw err
+              console.log(obj)
+              t.deepEqual(obj, 
+                { 'animal/pig': _c, 'animal/pig.ear': _c, 'animal/pig.mouth': _c, 'plant/cucumber': _c}
+              )
+
+              t.end()
+            })
         })
     })
 })

@@ -54,7 +54,16 @@ you cannot run 7 on a database you created with 6_.
 * [bug] fixed the hooks may be memory leak when free sublevel.
   * https://github.com/dominictarr/level-sublevel/issues/38
   * sublevel.close will deregister hooks now.
-
+* readStream
+  + bounded(boolean, default is true) option to options: whether limit the boundary of the data.
+  + separatorRaw(boolean, default: false): do not convert the separator, use this separator directly if true.
+    in fact the pathStream is set the options to {separator:'/', separatorRaw: true, start:'0'} simply.
++ createPathStream/pathStream
+* readStream/pathStream
+  + the "last" event, this event will return the last raw key(hasnt be decoded).
+    * the last return undefined if no more data.
+  + the next option on options, this is a raw key ensure the readStream/pathStream return keys is greater than the key.
+    * note: use this will replace the gt or lt(reverse) option.
 
 ## Main Concepts
 
@@ -118,7 +127,12 @@ db.put("/stuff/animal/pig/.ear", value, function(err){})
 
 //list all pig's attributes
 db.createReadStream({path: "/stuff/animal/pig", separator="."})
-//return: {key:".mouth", value:value}, {key:".ear", value:value}
+//return: {".mouth":value, ".ear":value}
+
+//list all pig's attributes
+db.createPathStream({path: "/stuff"}) //= db.createReadStream({separator:'/', separatorRaw: true, start:'0'})
+//return:{ 'animal/pig': value, 'animal/pig.ear': value, 'animal/pig.mouth': value, 'plant/cucumber': value}
+
 
 //list all keys in "/stuff/animal"
 db.createReadStream({path: "/stuff/animal"})

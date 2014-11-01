@@ -243,9 +243,12 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
     opts = mergeOpts(opts)
     return new WriteStream(opts, emitter)
   }
-  emitter.findStream = emitter.createFindStream = function(opts) {
-    opts = mergeOpts(opts)
-    return new WriteStream(opts, emitter)
+  emitter.pathStream = emitter.createPathStream = function(opts) {
+      opts = opts || {}
+      opts.separator = PATH_SEP
+      opts.separatorRaw = true
+      opts.gte = '0'
+      return emitter.createReadStream(opts)
   }
   /*
   emitter.open = function (cb) {

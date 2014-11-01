@@ -1,9 +1,16 @@
 var levelup = require('level-test')()
+var precodec = require('../codec')
 
 var db = levelup('test-sublevel-path')
 var base = require('../')(db)
 
 var test = require('tape')
+
+var SUBKEY_SEPS = precodec.SUBKEY_SEPS
+var encode = precodec.encode
+var SEP1 = SUBKEY_SEPS[0][1]
+var SEP2 = SUBKEY_SEPS[0][2]
+var SEP11= SUBKEY_SEPS[1][1] //escaped the SEP1
 
 test('sublevel-path-get', function (t) {
   t.deepEqual(base.sublevels, {})
@@ -41,7 +48,7 @@ test('sublevel-path-get', function (t) {
                     bar.get('.b', function(err,v){
                       if (err) throw(err)
                       t.equal(v, '6')
-                      db.get('/bar/!b', function(err,v){
+                      db.get('/bar/'+SEP11+'b', function(err,v){
                           if (err) throw(err)
                           t.equal(v, '6')
                           t.end()
