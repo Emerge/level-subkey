@@ -282,13 +282,17 @@ exports = module.exports = function (db, precodec, codec) {
           }
         }
       }
-
-      if(ready)
-        return wrapIterator((db.db || db).iterator(opts))
-      else
+      var vDb = db.db || db
+      if(ready) {
+        var result = wrapIterator(vDb.iterator(opts))
+        cb(null, result)
+        return result
+      }
+      else {
         waiting.push(function () {
-          cb(null, wrapIterator((db.db || db).iterator(opts)))
+          cb(null, wrapIterator(vDb.iterator(opts)))
         })
+      }
 
     }
   }

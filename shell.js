@@ -194,13 +194,14 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
 
     var isFilterExists = isFunction(opts.filter)
 
-    var stream
+    var stream = createStream(opts, nut.createDecoder(opts))
     var it = nut.iterator(opts, function (err, it) {
       stream.setIterator(it)
+      it.stream = stream
     })
 
-    stream = createStream(opts, nut.createDecoder(opts))
-    if(it) stream.setIterator(it)
+    //stream = createStream(opts, nut.createDecoder(opts))
+    //if(it) stream.setIterator(it)
 
 
     //to avoid the stream is a pull-stream
