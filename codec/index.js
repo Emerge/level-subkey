@@ -2,7 +2,7 @@
 //define the key ordering for level-sublevel
 
 //special key seperators
-var SUBKEY_SEPS = ['/.@', '#!^']
+var SUBKEY_SEPS = ['/.!', '#*&']
 var UNSAFE_CHARS =  SUBKEY_SEPS[0] + SUBKEY_SEPS[1] + '%'
 var PATH_SEP = SUBKEY_SEPS[0][0], SUBKEY_SEP = SUBKEY_SEPS[1][0]
 
@@ -58,18 +58,29 @@ indexOfType = function(s) {
   return -1
 }
 
-//the e is array[path, key, seperator]
-//the seperator is optional
+//the e is array[path, key, seperator, DontEscapeSep]
+//the seperator, DontEscapeSep is optional
+//DontEscapeSep: means do not escape the separator.
+//NOTE: if the separator is PATH_SEP then it DO NOT BE CONVERT TO SUBKEY_SEP.
 exports.encode = function (e) {
   var i
   var vSeperator = SUBKEY_SEP
+  //e[2]: seperator
   var hasSep = e.length >= 3 && e[2]
+  //e[3]: DontEscapeSep
+  if (e.length >=4 && e[3] === true) {
+      hasSep = false
+      if (e[2]) vSeperator = e[2]
+      if (vSeperator !== PATH_SEP) vSeperator = PATH_SEP + vSeperator
+  }
   var key = e[1], isStrKey = isString(key) && key.length !== 0
   if (hasSep) {
       vSeperator = e[2]
-      i = SUBKEY_SEPS[0].indexOf(vSeperator, 1)
-      if (i > 0)
-        vSeperator = PATH_SEP + SUBKEY_SEPS[1][i]
+      i = SUBKEY_SEPS[0].indexOf(vSeperator)
+      if (i >= 0) {
+        vSeperator = SUBKEY_SEPS[1][i]
+        if (vSeperator !== PATH_SEP) vSeperator = PATH_SEP + SUBKEY_SEPS[1][i]
+      }
       else
         vSeperator = PATH_SEP + vSeperator
   } else if (isStrKey){
