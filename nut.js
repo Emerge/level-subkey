@@ -248,7 +248,16 @@ exports = module.exports = function (db, precodec, codec) {
       //convert the lower/upper bounds to real lower/upper bounds.
       //precodec.lowerBound, precodec.upperBound are default bounds in case of the opts have no bounds.
       ltgt.toLtgt(opts, opts, encodeKey, precodec.lowerBound, precodec.upperBound)
-
+      if (opts.next) {
+          if (opts.reverse !== true) {
+            opts.gt = opts.next
+            opts.gte= opts.next
+          }
+          else {
+            opts.lt = opts.next
+            opts.lte= opts.next
+        }
+      }
       //opts.path = null
 
       //************************************************
@@ -270,15 +279,20 @@ exports = module.exports = function (db, precodec, codec) {
         return {
           // cb(err, key, value): halt when key && value are both undefined
           next: function (cb) {
+              var self = this
               return iterator.next(function(err, key, value){
                   if (!err && (key !== undefined || value !== undefined)) {
-                    this.last = key
+                    self.last = key
                   }
                   return cb(err, key, value)
               })
           },
           end: function (cb) {
-            iterator.end(cb)
+            var self = this
+            iterator.end(function(){
+                self.stream.emit("last", self.last)
+                cb()
+            })
           }
         }
       }
