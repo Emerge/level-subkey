@@ -35,6 +35,7 @@ you cannot run 7 on a database you created with 6_.
     *  0(nut.FILTER_INCLUDED): include this item
     *  1(nut.FILTER_EXCLUDED): exclude
     * -1(nut.FILTER_STOPPED): stop.
+  * note: the filter parameters key and value may be null, it be affected via keys and values of options.
 + supports subkey uses other separators, and you can change the default keys separator
   * the '%' can not be used as separator.
   * the default subkey's separator is "#" if no any separator provided.

@@ -193,11 +193,6 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
     opts.path = getPathArray(opts.path) || prefix
 
     var isFilterExists = isFunction(opts.filter)
-    var vKeys=opts.keys, vValues=opts.values
-    if (isFilterExists) {
-        opts.keys = true
-        opts.values = true
-    }
 
     var stream
     var it = nut.iterator(opts, function (err, it) {
@@ -211,18 +206,20 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
     //to avoid the stream is a pull-stream
     if (!stream.type && isFilterExists) {
         var filterStream = through(function(item){
-            switch (opts.filter(item.key, item.value)) {
+            var vKey = vValue = null
+            if (isObject(item))
+              vKey = item.key, vValue = item.value
+            else if (opts.keys !== false)
+              vKey = item
+            else if (opts.values !== false)
+              vValue = item
+            switch (opts.filter(vKey, vValue)) {
                 case  FILTER_EXCLUDED: return        //exclude
                 case  FILTER_STOPPED : this.end()//this.emit('end')   //halt
                                        return
             }
-            if (vKeys !== false && vValues !== false) {
-                //this.emit('data',item)
-                this.push(item)
-            } else {
-                if (vKeys !== false)  this.push(item.key)
-                if (vValues !== false) this.push(item.value)//this.emit('data',item.value)
-            }
+            //this.emit('data',item)
+            this.push(item)
         }, null)
         filterStream.writable = false
         stream = stream.pipe(filterStream)

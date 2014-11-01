@@ -39,13 +39,21 @@ require('tape')('sublevel', function (t) {
   var _d = "DDD_2333"
 
   function filter(key, value) {
-      console.log("f:", key, " v:", value)
+      console.log("filter:", key, " v:", value)
       if (key.indexOf(".") < 0) return FILTER_EXCLUDED //return true to stop.
   }
 
   function filterEnd(key, value) {
-      console.log("f:", key, " v:", value)
+      console.log("filter:", key, " v:", value)
       if (key == "d5") return FILTER_STOPPED //return true to stop.
+  }
+  function filterKeyOnly(key, value) {
+      t.strictEqual(value, null)
+      if (key == "d5") return FILTER_STOPPED //return true to stop.
+  }
+  function filterValue(key, value) {
+      t.strictEqual(key, null)
+      if (value == _d) return FILTER_STOPPED //return true to stop.
   }
 
   a.batch([
@@ -71,14 +79,21 @@ require('tape')('sublevel', function (t) {
             '3.c': _c,
             'd4' : _d
           })
-          all(a, {filter: filterEnd, values: false}, function (err, obj) {
+          all(a, {filter: filterKeyOnly, values: false}, function (err, obj) {
             t.deepEqual(obj, 
               [ '1.a',
                 '2.b',
                 '3.c',
                 'd4' 
               ])
-             t.end()
+              all(a, {filter: filterValue, keys: false}, function (err, obj) {
+                t.deepEqual(obj, 
+                  [  _a,
+                     _b,
+                     _c,
+                  ])
+                  t.end()
+              })
           })
       })
     })
