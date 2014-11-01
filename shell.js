@@ -257,6 +257,10 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
         unhooks[i]()
     }
     this.unhooks = []
+    for (var k in this._sublevels) {
+        this._sublevels[k].close()
+    }
+    this._sublevels = {}
     nut.close(cb)
     //process.nextTick(cb || function () {})
   }
