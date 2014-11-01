@@ -200,10 +200,6 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
       it.stream = stream
     })
 
-    //stream = createStream(opts, nut.createDecoder(opts))
-    //if(it) stream.setIterator(it)
-
-
     //to avoid the stream is a pull-stream
     if (!stream.type && isFilterExists) {
         var filterStream = through(function(item){
