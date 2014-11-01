@@ -23,8 +23,8 @@
 //var isWindows = process.platform === 'win32';
 //var util = require('util');
 
-var precodec = require("./codec");
-var PATH_SEP = precodec.PATH_SEP
+var SEP = require("./codec");
+//var PATH_SEP = SEP.PATH_SEP
 
 function objectToString(o) {
   return Object.prototype.toString.call(o);
@@ -75,7 +75,7 @@ function normalizeArray(parts, allowAboveRoot) {
         case '.':
             allowAboveRoot = true;
             break;
-        case PATH_SEP:
+        case SEP.PATH_SEP:
             allowAboveRoot =false;
             parts.splice(0,1);
             break;
@@ -110,8 +110,9 @@ exports.normalizeArray = normalizeArray;
 
   // Split a filename into [root, dir, basename, ext], unix version
   // 'root' is just a slash, or nothing.
-  var splitPathRe =
-      /^(\/?|)([\s\S]*?)((?:\.{1,2}|[^\/]+?|)(\.[^.\/]*|))(?:[\/]*)$/;
+  //var splitPathRe =
+  //    /^(\/?|)([\s\S]*?)((?:\.{1,2}|[^\/]+?|)(\.[^.\/]*|))(?:[\/]*)$/;
+  var splitPathRe = new RegExp("^("+SEP.PATH_SEP+"?|)([\\s\\S]*?)((?:\\.{1,2}|[^"+SEP.PATH_SEP+"]+?|)(\.[^."+SEP.PATH_SEP+"]*|))(?:["+SEP.PATH_SEP+"]*)$");
   var splitPath = function(filename) {
     return splitPathRe.exec(filename).slice(1);
   };
@@ -119,6 +120,7 @@ exports.normalizeArray = normalizeArray;
   // path.resolve([from ...], to)
   // posix version
   // return [resolvedAbsolute, parts...]
+  // the arguments can be string or array
   resolveArray = exports.resolveArray = function() {
     var resolvedPath = [],
         resolvedAbsolute = false;
@@ -142,9 +144,9 @@ exports.normalizeArray = normalizeArray;
         continue;
       }
 
-      resolvedPath = path.split('/').filter(Boolean).concat(resolvedPath);
+      resolvedPath = path.split(SEP.PATH_SEP).filter(Boolean).concat(resolvedPath);
       //resolvedPath = path + '/' + resolvedPath;
-      resolvedAbsolute = path.charAt(0) === '/';
+      resolvedAbsolute = path.charAt(0) === SEP.PATH_SEP;
     }
 
     // At this point the path should be resolved to a full absolute path, but
@@ -163,15 +165,15 @@ exports.normalizeArray = normalizeArray;
     var resolvedPath = resolveArray.apply(null,arguments);
     var resolvedAbsolute = resolvedPath[0];
     resolvedPath.shift(0,1);
-    return ((resolvedAbsolute ? PATH_SEP : '') + resolvedPath.join(PATH_SEP)) || '.';
+    return ((resolvedAbsolute ? SEP.PATH_SEP : '') + resolvedPath.join(SEP.PATH_SEP)) || '.';
   };
 
   // path.normalize(path)
   // posix version
   exports.normalize = function(path) {
     var isAbsolute = exports.isAbsolute(path),
-        trailingSlash = path[path.length - 1] === '/',
-        segments = path.split('/'),
+        trailingSlash = path[path.length - 1] === SEP.PATH_SEP,
+        segments = path.split(SEP.PATH_SEP),
         nonEmptySegments = [];
 
     // Normalize the path
@@ -180,26 +182,27 @@ exports.normalizeArray = normalizeArray;
         nonEmptySegments.push(segments[i]);
       }
     }
-    path = normalizeArray(nonEmptySegments, !isAbsolute).join('/');
+    path = normalizeArray(nonEmptySegments, !isAbsolute).join(SEP.PATH_SEP);
 
     if (!path && !isAbsolute) {
       path = '.';
     }
     if (path && trailingSlash) {
-      path += '/';
+      path += SEP.PATH_SEP;
     }
 
-    return (isAbsolute ? '/' : '') + path;
+    return (isAbsolute ? SEP.PATH_SEP : '') + path;
   };
 
   // posix version
   exports.isAbsolute = function(path) {
-    return path.charAt(0) === '/';
+    return path.charAt(0) === SEP.PATH_SEP;
   };
 
   // posix version
   exports.join = function() {
     var path = '';
+    var vPathSep = SEP.PATH_SEP;
     for (var i = 0; i < arguments.length; i++) {
       var segment = arguments[i];
       if (!isString(segment)) {
@@ -209,7 +212,7 @@ exports.normalizeArray = normalizeArray;
         if (!path) {
           path += segment;
         } else {
-          path += '/' + segment;
+          path += vPathSep + segment;
         }
       }
     }
@@ -220,9 +223,13 @@ exports.normalizeArray = normalizeArray;
   // path.relative(from, to)
   // posix version
   exports.relative = function(from, to) {
-    from = exports.resolve(from).substr(1);
-    to = exports.resolve(to).substr(1);
+    var vPathSep = SEP.PATH_SEP;
+    var fromParts = resolveArray(from);
+    var toParts = resolveArray(to);
+    fromParts.shift(0,1);
+    toParts.shift(0,1);
 
+    /*
     function trim(arr) {
       var start = 0;
       for (; start < arr.length; start++) {
@@ -238,12 +245,13 @@ exports.normalizeArray = normalizeArray;
       return arr.slice(start, end + 1);
     }
 
-    var i;
-    var fromParts = trim(from.split('/'));
-    var toParts = trim(to.split('/'));
+    var fromParts = trim(from.split(vPathSep));
+    var toParts = trim(to.split(vPathSep));
+    */
 
     var length = Math.min(fromParts.length, toParts.length);
     var samePartsLength = length;
+    var i;
     for (i = 0; i < length; i++) {
       if (fromParts[i] !== toParts[i]) {
         samePartsLength = i;
@@ -258,10 +266,10 @@ exports.normalizeArray = normalizeArray;
 
     outputParts = outputParts.concat(toParts.slice(samePartsLength));
 
-    return outputParts.join('/');
+    return outputParts.join(vPathSep);
   };
 
-  exports.sep = '/';
+  exports.sep = SEP.PATH_SEP;
   exports.delimiter = ':';
 
 exports.dirname = function(path) {
