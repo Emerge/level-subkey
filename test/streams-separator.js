@@ -269,3 +269,73 @@ tape('stream-path-separatorRaw-start2', function (t) {
         })
     })
 })
+
+
+  var dataOps = [
+        {
+          type: "put",
+          key: "/科目不包括/飞机",
+          value: ""
+        }, {
+          type: "put",
+          key: "/科目/.名称",
+          value: ""
+        }, {
+          type: "put",
+          key: "/科目/!XX",
+          value: ""
+        }, {
+          type: "put",
+          key: "/科目/飞机",
+          value: ""
+        }, {
+          type: "put",
+          key: "/科目/飞机/.轮子",
+          value: ""
+        }, {
+          type: "put",
+          key: "/科目/飞机/.盘子",
+          value: ""
+        }, {
+          type: "put",
+          key: "/科目/飞机/客机",
+          value: ""
+        }, {
+          type: "put",
+          key: "/科目/飞机/战斗机",
+          value: ""
+        }, {
+          type: "put",
+          key: "/科目/大盘",
+          value: ""
+        }, {
+          type: "put",
+          key: "/科目/飞碟",
+          value: ""
+        }, {
+          type: "put",
+          key: "/科目/大炮",
+          value: ""
+        }
+      ].map(function(i){
+          i.value = "abc"
+          return i
+      });
+tape('pathStream-init', function (t) {
+   base.batch(dataOps, function(err){
+       if (err) throw err
+       t.end()
+   });
+})
+
+tape('pathStream', function (t) {
+    var result = null
+    base.pathStream({path:'科目',limit:1,values:false}).on("data", function(item){
+        result = true
+    }).on('error', function(err){
+      if(err) throw err
+    }).on('end', function(){
+        t.strictEqual(result, true)
+        t.end()
+    })
+})

@@ -171,6 +171,8 @@ function stream (db) {
       pull(db.createReadStream(), pull.collect(function (err, ary) {
         if(err) throw err
         console.log(ary)
+        var o = batch.map(function(i){i.path=db.path();return i;})
+
         t.deepEqual(ary, batch)
         t.end()
       }))
