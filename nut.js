@@ -231,10 +231,14 @@ exports = module.exports = function (db, precodec, codec) {
       }
       if(opts.keys !== false && opts.values !== false)
         return function (key, value) {
-          return {
+          var result = {
               key: decodeKeyWithOptions(key, opts),
               value: codec.decodeValue(value, opts)
           }
+          if (opts.absoluteKey !== true) {
+              result.path = pathArrayToPath(opts.path)
+          }
+          return result
         }
       if(opts.values !== false)
         return function (_, value) {
