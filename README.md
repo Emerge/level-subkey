@@ -59,6 +59,7 @@ you cannot run 7 on a database you created with 6_.
   + separatorRaw(boolean, default: false): do not convert the separator, use this separator directly if true.
     in fact the pathStream is set the options to {separator:'/', separatorRaw: true, start:'0'} simply.
 + createPathStream/pathStream
+  * the path includes the sublevels only(keys are excluded).
 * readStream/pathStream
   + the "last" event, this event will return the last raw key(hasnt be decoded).
     * the last return undefined if no more data.

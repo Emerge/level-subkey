@@ -257,7 +257,14 @@ tape('stream-path-separatorRaw-start2', function (t) {
                 { 'animal/pig': _c, 'animal/pig.ear': _c, 'animal/pig.mouth': _c, 'plant/cucumber': _c}
               )
 
-              t.end()
+                all(stuff, {path:"animal", separator:'/', separatorRaw: true, start:'0'}, function (err, obj) {
+                  if(err) throw err
+                  console.log(obj)
+                  t.deepEqual(obj, 
+                    { 'pig.ear': _c, 'pig.mouth': _c}
+                  )
+                  t.end()
+                })
             })
         })
     })

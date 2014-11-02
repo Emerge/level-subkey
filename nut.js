@@ -30,11 +30,19 @@ function pathToPathArray(aPath) {
         return []
 }
 
-function getPathArray (aPath) {
+function getPathArray (aPath, prefix) {
   if(aPath == null) return aPath
   //is a sublevel object?
   if(isFunction(aPath.pathAsArray)) return aPath.pathAsArray()
-  if(isString(aPath)) return pathToPathArray(aPath)
+  if(isString(aPath)) {
+      var result
+      if (prefix) {
+          result = path.resolveArray(prefix, aPath)
+          result.shift(0,1)
+      }
+      else result = pathToPathArray(aPath)
+      return result
+  }
   //is a path array:
   return aPath
 }
@@ -279,6 +287,7 @@ exports = module.exports = function (db, precodec, codec) {
 
       opts.keyAsBuffer = precodec.buffer
       opts.valueAsBuffer = codec.isValueAsBuffer(opts)
+      //console.log("it:opts:", opts)
 
       function wrapIterator (iterator) {
         return {
