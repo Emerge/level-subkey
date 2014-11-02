@@ -63,6 +63,13 @@ test('sublevel-path-get', function (t) {
   })
 })
 
+test('sublevel-path-get-undefinedOpts', function (t) {
+  base.batch([
+    { key: 'abc', value: 1, type: 'put', path: ['foo'] },
+  ])
+  base.put( 'abc', 1)
+  t.end()
+})
 
 
 

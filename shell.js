@@ -73,6 +73,7 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
   emitter.isOpen = function(){return nut.isOpen()}
   emitter.put = function (key, value, opts, cb) {
     if('function' === typeof opts) cb = opts, opts = {}
+    else if (opts === undefined) opts = {}
     if(!cb) cb = errback
     var vPath = isString(opts.path) && opts.path.length ? getPathArray(opts.path): prefix
 
@@ -106,6 +107,7 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
 
   emitter.del = function (key, opts, cb) {
     if('function' === typeof opts) cb = opts, opts = {}
+    else if (opts === undefined) opts = {}
     if(!cb) cb = errback
     var vPath = isString(opts.path) && opts.path.length ? getPathArray(opts.path): prefix
 
@@ -122,6 +124,7 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
   emitter.batch = function (ops, opts, cb) {
     if('function' === typeof opts)
       cb = opts, opts = {}
+    else if (opts === undefined) opts = {}
     if(!cb) cb = errback
     var vPath = isString(opts.path) && opts.path.length ? getPathArray(opts.path): prefix
     ops = ops.map(function (op) {
