@@ -1,20 +1,23 @@
-# level-sublevel
+# level-subkey
 
-Separate sections of levelup, with hooks!
+The level-subkey is modified from [level-sublevel](https://github.com/dominictarr/level-sublevel).
 
-[![build status](https://secure.travis-ci.org/dominictarr/level-sublevel.png)](http://travis-ci.org/dominictarr/level-sublevel)
+The level-subkey use the path to Separate sections of levelup, with hooks!
+the sublevel is called subkey.
 
-[![testling badge](https://ci.testling.com/dominictarr/level-sublevel.png)](https://ci.testling.com/dominictarr/level-sublevel)
+[![build status](https://secure.travis-ci.org/snowyu/level-subkey.png)](https://travis-ci.org/snowyu/level-subkey)
+
+[![testling badge](https://ci.testling.com/snowyu/level-subkey.png)](https://ci.testling.com/dominictarr/level-subkey)
 
 This module allows you to create a hierarchy data store with
 [levelup](https://github.com/rvagg/node-levelup) database,
-kinda like tables in an sql database, but evented, and ranged,
+kinda like tables in an sql database, but hierarchical, evented, and ranged,
 for real-time changing data.
 
 ## level-sublevel@7 **BREAKING CHANGES** via Riceball LEE
 
 * broken compatibility totally from v8.0.0.
-* dynamic sublevels
+* dynamic sublevels via key path
 * the keys are _encoded_ has changed, and _this means
 you cannot run 7 on a database you created with 6_.
 * hierarchy data store like path now.
@@ -34,10 +37,10 @@ you cannot run 7 on a database you created with 6_.
   * options.filter = function(key, value) return
     *  0(nut.FILTER_INCLUDED): include this item
     *  1(nut.FILTER_EXCLUDED): exclude
-    * -1(nut.FILTER_STOPPED): stop.
-  * note: the filter parameters key and value may be null, it be affected via keys and values of options.
+    * -1(nut.FILTER_STOPPED): stop stream.
+  * note: the filter parameters key and value may be null, it is affected via keys and values of options.
 + supports subkey uses other separators, and you can change the default keys separator
-  * the '%' can not be used as separator.
+  * the '%' can not be used as separator, it is the escape char.
   * the default subkey's separator is "#" if no any separator provided.
   * the others can have the subkeys too:
     * '/path/key/.attribute/#subkey'
@@ -86,16 +89,16 @@ This module is working well, but may change in the future as its use is further 
 
 ``` js
 var LevelUp = require('levelup')
-var Sublevel = require('level-sublevel')
+var Subkey = require('level-subkey')
 
-var db = Sublevel(LevelUp('/tmp/sublevel-example'))
-var sub = db.sublevel('stuff')
+var db = Subkey(LevelUp('/tmp/sublevel-example'))
+var stuff = db.subkey('stuff')
 
 //put a key into the main levelup
 db.put(key, value, function () {})
 
 //put a key into the sub-section!
-sub.put(key2, value, function () {})
+stuff.put(key2, value, function () {})
 ```
 
 Sublevel prefixes each subsection so that it will not collide
@@ -105,14 +108,14 @@ with the outer db when saving or reading!
 
 ``` js
 var LevelUp = require('levelup')
-var Sublevel = require('level-sublevel')
+var Sublevel = require('level-subkey')
 
 var db = Sublevel(LevelUp('/tmp/sublevel-example'))
 
 //old sublevel usage:
-var stuff = db.sublevel('stuff')
-var animal = stuff.sublevel('animal')
-var plant = stuff.Sublevel('plant')
+var stuff = db.subkey('stuff')
+var animal = stuff.subkey('animal')
+var plant = stuff.subkey('plant')
 
 //put a key into animal!
 animal.put("pig", value, function () {})
@@ -165,7 +168,7 @@ Whenever a record is inserted,
 save an index to it by the time it was inserted.
 
 ``` js
-var sub = db.sublevel('SEQ')
+var sub = db.subkey('SEQ')
 
 db.pre(function (ch, add) {
   add({
@@ -188,7 +191,7 @@ Notice that the `parent` property to `add()` is set to `sub`, which tells the ho
 ### Hooks Another Example
 
 ``` js
-var sub = db.sublevel('SEQ')
+var sub = db.subkey('SEQ')
 
 //Hooks range 
 db.pre({gte:"", lte:"", path:""}, function (ch, add) {
@@ -221,8 +224,8 @@ if set, this row will be inserted into that database section,
 instead of the current section, similar to the `pre` hook above.
 
 ``` js
-var sub1 = db.sublevel('SUB_1')
-var sub2 = db.sublevel('SUB_2')
+var sub1 = db.subkey('SUB_1')
+var sub2 = db.subkey('SUB_2')
 
 sub.batch([
   {key: 'key', value: 'Value', type: 'put'},

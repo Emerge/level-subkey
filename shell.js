@@ -4,6 +4,7 @@ var EventEmitter = require('events').EventEmitter
 var addpre = require('./range').addPrefix
 var precodec = require("./codec")
 var _nut = require('./nut')
+var util = require('util')
 
 var FILTER_INCLUDED = _nut.FILTER_INCLUDED
 var FILTER_EXCLUDED = _nut.FILTER_EXCLUDED
@@ -161,10 +162,14 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
     })
   }
 
-  emitter.sublevel = function (name, opts) {
+  emitter.subkey = function (name, opts) {
     return emitter._sublevels['$' + name] =
       emitter._sublevels['$' + name] || sublevel(nut, prefix.concat(name), createStream, mergeOpts(opts))
   }
+
+  emitter.sublevel = util.deprecate(function(name, opts) {
+    return emitter.subkey(name, opts);
+  }, 'the sublevel will be deprecated, use `subkey` instead please.');
 
   function _addHook(key, callback, hooksAdd) {
       if(isFunction(key)) return hooksAdd([prefix], key)
