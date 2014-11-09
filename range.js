@@ -1,4 +1,5 @@
 var ltgt = require('ltgt')
+var minimatch = require('minimatch')
 
 //compare two array items
 function isArrayLike (a) {
@@ -33,6 +34,7 @@ function compare (a, b) {
 //this assumes that the prefix is of the form:
 // [Array, string]
 
+//a=range, b=key =[pathArray, string]
 function prefix (a, b) {
   if(a.length > b.length) return false
   var l = a.length - 1
@@ -43,7 +45,7 @@ function prefix (a, b) {
     return false
 
   if('string' == typeof lastA
-    && 0 != lastB.indexOf(lastA))
+    && minimatch(lastB, lastA) === false)
       return false
   
   //handle cas where there is no key prefix

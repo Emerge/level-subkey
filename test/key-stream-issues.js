@@ -28,6 +28,7 @@ test('key only stream keys do not include sublevel prefix', function (t) {
   var arr = []
   sub.createReadStream({ keys: true, values: false })
     .pipe(through(arr.push.bind(arr), function () {
+      console.log(arr)
       t.ok(~arr.indexOf('rvagg'), 'has rvagg without prefix')
       t.ok(~arr.indexOf('dominictarr'), 'has dominictarr without prefix')
       t.ok(~arr.indexOf('juliangruber'), 'has juliangruber without prefix')

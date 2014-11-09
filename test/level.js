@@ -32,7 +32,7 @@ function prehookPut (db) {
     var log = db.sublevel('log')
     var c = 0
     db.pre(function (op, add) {
-      add({key: ''+c++, value: op.key, prefix: log.prefix()})
+      add({key: ''+c++, value: op.key, path: log.pathAsArray()})
     })
 
     db.put('hello', 'there?', function (err) {
@@ -54,7 +54,7 @@ function prehookBatch (db) {
     var log = db.sublevel('log')
     var c = 0
     db.pre(function (op, add) {
-      add({key: ''+c++, value: op.key, prefix: log.prefix()})
+      add({key: ''+c++, value: op.key, path: log.pathAsArray()})
     })
 
     db.batch([
@@ -168,10 +168,11 @@ function stream (db) {
 
     db.batch(batch, function (err) {
       if(err) throw err
-
       pull(db.createReadStream(), pull.collect(function (err, ary) {
         if(err) throw err
         console.log(ary)
+        var o = batch.map(function(i){i.path=db.path();return i;})
+
         t.deepEqual(ary, batch)
         t.end()
       }))
@@ -181,10 +182,12 @@ function stream (db) {
 
 
 var tests = [
+/*
   prehookPut,
   prehookBatch,
   createPostHooks,
   rmHook,
+  */
   stream
 ]
 

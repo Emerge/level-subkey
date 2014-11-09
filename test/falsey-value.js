@@ -28,7 +28,7 @@ falsies.forEach(function (falsey, i) {
       })
     })
 
-  tape('allow falsey value in key', function (t) {
+  tape('allow falsey value in key:' + JSON.stringify(falsey), function (t) {
     var sdb = db.sublevel(names[i])
     sdb.put(falsey, {index: i}, function (err) {
       if(err) throw err

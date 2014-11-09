@@ -1,20 +1,22 @@
 var level = require('level-test')()
 var sublevel = require('../')
 
-require('tape')('sublevel', function (t) {
+require('tape')('sublevel-path-stream', function (t) {
 
-  require('rimraf').sync('/tmp/test-sublevel-readstream')
+  require('rimraf').sync('/tmp/test-sublevel-path-stream')
 
-  var db = level('test-sublevel-readstream')
+  var db = level('test-sublevel-path-stream')
   var base = sublevel(db)
 
   var a    = base.sublevel('A')
 
   var i = 0
 
-  function all(db, cb) {
+  function all(db, opts, cb) {
     var o = {}
-    db.createReadStream({end: '\xff\xff'}).on('data', function (data) {
+    opts = opts || {}
+    opts.end = '\xff\xff'
+    db.createReadStream(opts).on('data', function (data) {
       o[data.key.toString()] = data.value.toString()
     })
     .on('end', function () {
@@ -31,7 +33,7 @@ require('tape')('sublevel', function (t) {
     {key: 'c', value: _c = 'CCC_'+Math.random(), type: 'put'},
   ], function (err) {
     if(err) throw err
-    all(db, function (err, obj) {
+    all(db, {}, function (err, obj) {
       console.log(obj)
       t.deepEqual(obj, 
         { '/A#a': _a,
@@ -39,12 +41,12 @@ require('tape')('sublevel', function (t) {
           '/A#c': _c
         })
 
-      all(a, function (err, obj) {
+      all(a, {absoluteKey: true}, function (err, obj) {
         console.log(obj)
         t.deepEqual(obj, 
-          { 'a': _a,
-            'b': _b,
-            'c': _c
+          { '/A/a': _a,
+            '/A/b': _b,
+            '/A/c': _c
           })
         t.end()
       })
