@@ -75,6 +75,7 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
     if('function' === typeof opts) cb = opts, opts = {}
     else if (opts === undefined) opts = {}
     if(!cb) cb = errback
+    if (opts.prefix && !opts.path) opts.path = opts.prefix
     var vPath = isString(opts.path) && opts.path.length ? getPathArray(opts.path): prefix
 
     nut.apply([{
@@ -109,6 +110,7 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
     if('function' === typeof opts) cb = opts, opts = {}
     else if (opts === undefined) opts = {}
     if(!cb) cb = errback
+    if (opts.prefix && !opts.path) opts.path = opts.prefix
     var vPath = isString(opts.path) && opts.path.length ? getPathArray(opts.path): prefix
 
     nut.apply([{
@@ -126,6 +128,7 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
       cb = opts, opts = {}
     else if (opts === undefined) opts = {}
     if(!cb) cb = errback
+    if (opts.prefix && !opts.path) opts.path = opts.prefix
     var vPath = isString(opts.path) && opts.path.length ? getPathArray(opts.path): prefix
     ops = ops.map(function (op) {
       return {
@@ -149,6 +152,7 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
   emitter.get = function (key, opts, cb) {
     if('function' === typeof opts)
       cb = opts, opts = {}
+    if (opts.prefix && !opts.path) opts.path = opts.prefix
     var vPath = isString(opts.path) ? getPathArray(opts.path): prefix
     if (opts.path) opts.path = getPathArray(opts.path)
     nut.get(key, vPath, mergeOpts(opts), function (err, value) {
@@ -193,6 +197,7 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
 
   emitter.readStream = emitter.createReadStream = function (opts) {
     opts = mergeOpts(opts)
+    if (opts.prefix && !opts.path) opts.path = opts.prefix
     //the opts.path could be relative
     opts.path = getPathArray(opts.path, prefix) || prefix
 

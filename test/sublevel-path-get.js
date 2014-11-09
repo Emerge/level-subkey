@@ -71,6 +71,12 @@ test('sublevel-path-get-undefinedOpts', function (t) {
   t.end()
 })
 
-
+test('sublevel-path-get-prefix', function (t) {
+  base.get("b", {prefix: "bar"}, function(err, v){
+    if (err) throw(err)
+    t.equal(v, '5')
+    t.end()
+  })
+})
 
 
