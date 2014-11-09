@@ -70,6 +70,7 @@ var writes = [
     {key: '/A/z6', value: _d+"6"},
     {key: 'c7', value: _d+"7"},
     {key: '/A/.3.c/abc', value: _c},
+    {key: '../B/123', value: _d},
   ]
 
 
@@ -84,6 +85,7 @@ expectedResults[encodeKey('/A/d5')] = _d+"5"
 expectedResults[encodeKey('/A/z6')] = _d+"6"
 expectedResults[encodeKey('/A/c7')] = _d+"7"
 expectedResults[encodeKey('/A/.3.c/abc')] = _c
+expectedResults[encodeKey('/B/123')] = _d
 
 function writeTo(aStream, items) {
     for (var i=0; i< items.length; i++) {
@@ -102,7 +104,11 @@ tape('writeStream', function (t) {
     all(db, {}, function (err, obj) {
       if(err) throw err
       t.deepEqual(obj, expectedResults)
-       t.end()
+      b.get("123", function(err, value){
+        if(err) throw err
+        t.equal(value, _d)
+        t.end()
+      })
     })
   })
   writeTo(stream, writes)
