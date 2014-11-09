@@ -1,12 +1,23 @@
 {
-  "name": "level-sublevel",
-  "description": "partition levelup databases",
+  "name": "level-subkey",
+  "description": "hierarchy partition levelup databases",
   "version": "7.7.0",
-  "homepage": "https://github.com/dominictarr/level-sublevel",
+  "homepage": "https://github.com/snowyu/level-subkey",
   "repository": {
     "type": "git",
-    "url": "git://github.com/dominictarr/level-sublevel.git"
+    "url": "git://github.com/dominictarr/level-subkey.git"
   },
+  "keywords": [
+    "hierarchy",
+    "partition",
+    "leveldb",
+    "stream",
+    "database",
+    "db",
+    "store",
+    "storage",
+    "json"
+  ],
   "dependencies": {
     "bytewise": "~0.7.1",
     "levelup": "~0.19.0",
@@ -31,7 +42,27 @@
   "scripts": {
     "test": "set -e; for t in test/*.js; do node $t; done"
   },
-  "author": "Dominic Tarr <dominic.tarr@gmail.com> (http://dominictarr.com)",
+  "contributors": [
+    {
+      "name": "Dominic Tarr",
+      "email": "dominic.tarr@gmail.com",
+      "url": "http://dominictarr.com"
+    },
+    {
+      "name": "Riceball LEE",
+      "email": "snowyu.lee@gmail.com",
+      "url": "https://github.com/snowyu"
+    },
+  ],
+  "maintainers": [
+    {
+      "name": "Riceball LEE",
+      "email": "snowyu.lee@gmail.com"
+    }
+  ],
+  "bugs": {
+    "url": "https://github.com/snowyu/level-subkey/issues"
+  },
   "license": "MIT",
   "stability": "unstable",
   "testling": {

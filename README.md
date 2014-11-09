@@ -2,12 +2,12 @@
 
 The level-subkey is modified from [level-sublevel](https://github.com/dominictarr/level-sublevel).
 
-The level-subkey use the path to Separate sections of levelup, with hooks!
-the sublevel is called subkey.
+The level-subkey use the path to separate sections of levelup, with hooks!
+these sublevels are called subkey.
 
 [![build status](https://secure.travis-ci.org/snowyu/level-subkey.png)](https://travis-ci.org/snowyu/level-subkey)
 
-[![testling badge](https://ci.testling.com/snowyu/level-subkey.png)](https://ci.testling.com/dominictarr/level-subkey)
+[![testling badge](https://ci.testling.com/snowyu/level-subkey.png)](https://ci.testling.com/snowyu/level-subkey)
 
 This module allows you to create a hierarchy data store with
 [levelup](https://github.com/rvagg/node-levelup) database,
