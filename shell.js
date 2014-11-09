@@ -4,7 +4,7 @@ var EventEmitter = require('events').EventEmitter
 var addpre = require('./range').addPrefix
 var precodec = require("./codec")
 var _nut = require('./nut')
-var util = require('util')
+var deprecate = require('depd')('level-subkey')
 
 var FILTER_INCLUDED = _nut.FILTER_INCLUDED
 var FILTER_EXCLUDED = _nut.FILTER_EXCLUDED
@@ -76,6 +76,7 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
     if('function' === typeof opts) cb = opts, opts = {}
     else if (opts === undefined) opts = {}
     if(!cb) cb = errback
+    if (opts.prefix) deprecate.property(opts, 'prefix', 'prefix option, use `path` instead.')
     if (opts.prefix && !opts.path) opts.path = opts.prefix
     var vPath = isString(opts.path) && opts.path.length ? getPathArray(opts.path): prefix
 
@@ -111,6 +112,7 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
     if('function' === typeof opts) cb = opts, opts = {}
     else if (opts === undefined) opts = {}
     if(!cb) cb = errback
+    if (opts.prefix) deprecate.property(opts, 'prefix', 'prefix option, use `path` instead.')
     if (opts.prefix && !opts.path) opts.path = opts.prefix
     var vPath = isString(opts.path) && opts.path.length ? getPathArray(opts.path): prefix
 
@@ -129,6 +131,7 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
       cb = opts, opts = {}
     else if (opts === undefined) opts = {}
     if(!cb) cb = errback
+    if (opts.prefix) deprecate.property(opts, 'prefix', 'prefix option, use `path` instead.')
     if (opts.prefix && !opts.path) opts.path = opts.prefix
     var vPath = isString(opts.path) && opts.path.length ? getPathArray(opts.path): prefix
     ops = ops.map(function (op) {
@@ -153,6 +156,7 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
   emitter.get = function (key, opts, cb) {
     if('function' === typeof opts)
       cb = opts, opts = {}
+    if (opts.prefix) deprecate.property(opts, 'prefix', 'prefix option, use `path` instead.')
     if (opts.prefix && !opts.path) opts.path = opts.prefix
     var vPath = isString(opts.path) ? getPathArray(opts.path): prefix
     if (opts.path) opts.path = getPathArray(opts.path)
@@ -167,9 +171,9 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
       emitter._sublevels['$' + name] || sublevel(nut, prefix.concat(name), createStream, mergeOpts(opts))
   }
 
-  emitter.sublevel = util.deprecate(function(name, opts) {
+  emitter.sublevel = deprecate['function'](function(name, opts) {
     return emitter.subkey(name, opts);
-  }, 'the sublevel will be deprecated, use `subkey` instead please.');
+  }, 'sublevel, use `subkey` instead.');
 
   function _addHook(key, callback, hooksAdd) {
       if(isFunction(key)) return hooksAdd([prefix], key)
@@ -202,6 +206,7 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
 
   emitter.readStream = emitter.createReadStream = function (opts) {
     opts = mergeOpts(opts)
+    if (opts.prefix) deprecate.property(opts, 'prefix', 'prefix option, use `path` instead.')
     if (opts.prefix && !opts.path) opts.path = opts.prefix
     //the opts.path could be relative
     opts.path = getPathArray(opts.path, prefix) || prefix
@@ -253,6 +258,7 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
     return emitter.createReadStream(opts)
   }
 
+  //todo:
   emitter.writeStream = emitter.createWriteStream = function(opts) {
     opts = mergeOpts(opts)
     return new WriteStream(opts, emitter)
