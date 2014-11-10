@@ -18,6 +18,13 @@ var pathArrayToPath = _nut.pathArrayToPath
 var errors = require('levelup/lib/errors')
 var WriteStream = require('levelup/lib/write-stream')
 
+deprecate.assignProperty = function (object, deprecatedProp, currentProp) {
+    if (object[deprecatedProp]) {
+      deprecate(deprecatedProp+' property, use `'+currentProp+'` instead.')
+      if (!object[currentProp]) object[currentProp] = object[deprecatedProp]
+      delete object[deprecatedProp]
+    }
+}
 
 function isFunction (f) {
   return 'function' === typeof f
@@ -67,6 +74,25 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
         if(opts[k] !== undefined) o[k] = opts[k]
     return o
   }
+  function setPath(aPath) {
+      aPath = getPathArray(aPath)
+      if (aPath) {
+          prefix = path.normalizeArray(aPath)
+          return true
+      } else {
+          return false
+      }
+  }
+  function assignDeprecatedPrefixOption(options) {
+    deprecate.assignProperty(options, 'prefix', 'path')
+    /*
+    if (options.prefix) {
+      deprecate('prefix option, use `path` instead.')
+      if (!options.path) options.path = options.prefix
+      delete options.prefix
+    }
+    */
+  }
 
   //emitter.on = nut.on
   //emitter.once = nut.once
@@ -76,8 +102,7 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
     if('function' === typeof opts) cb = opts, opts = {}
     else if (opts === undefined) opts = {}
     if(!cb) cb = errback
-    if (opts.prefix) deprecate.property(opts, 'prefix', 'prefix option, use `path` instead.')
-    if (opts.prefix && !opts.path) opts.path = opts.prefix
+    assignDeprecatedPrefixOption(opts)
     var vPath = isString(opts.path) && opts.path.length ? getPathArray(opts.path): prefix
 
     nut.apply([{
@@ -93,27 +118,33 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
   emitter.pathAsArray = function () {
     return prefix.slice()
   }
+  emitter.prefix = deprecate['function'](function() {
+    return emitter.pathAsArray();
+  }, 'prefix(), use `pathAsArray()` instead, or use path() to return string path..');
 
-  emitter.path = function () {
-    return PATH_SEP + prefix.join(PATH_SEP)
-  }
 
-  emitter.setPath = function (aPath) {
-      aPath = getPathArray(aPath)
-      if (aPath) {
-          prefix = aPath
-          return true
-      } else {
-          return false
-      }
+  /*
+  emitter.__defineSetter__("path", function(value){
+      return setPath(value)
+  })
+  emitter.__defineGetter__("path", function(){
+      return PATH_SEP + prefix.join(PATH_SEP)
+  })
+  */
+  emitter.setPath = setPath
+  emitter.path = function (aPath, aOptions) {
+    if (aPath === undefined) {
+      return PATH_SEP + prefix.join(PATH_SEP)
+    } else {
+      return emitter.subkey(aPath, aOptions)
+    }
   }
 
   emitter.del = function (key, opts, cb) {
     if('function' === typeof opts) cb = opts, opts = {}
     else if (opts === undefined) opts = {}
     if(!cb) cb = errback
-    if (opts.prefix) deprecate.property(opts, 'prefix', 'prefix option, use `path` instead.')
-    if (opts.prefix && !opts.path) opts.path = opts.prefix
+    assignDeprecatedPrefixOption(opts)
     var vPath = isString(opts.path) && opts.path.length ? getPathArray(opts.path): prefix
 
     nut.apply([{
@@ -131,8 +162,7 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
       cb = opts, opts = {}
     else if (opts === undefined) opts = {}
     if(!cb) cb = errback
-    if (opts.prefix) deprecate.property(opts, 'prefix', 'prefix option, use `path` instead.')
-    if (opts.prefix && !opts.path) opts.path = opts.prefix
+    assignDeprecatedPrefixOption(opts)
     var vPath = isString(opts.path) && opts.path.length ? getPathArray(opts.path): prefix
     ops = ops.map(function (op) {
       return {
@@ -156,8 +186,7 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
   emitter.get = function (key, opts, cb) {
     if('function' === typeof opts)
       cb = opts, opts = {}
-    if (opts.prefix) deprecate.property(opts, 'prefix', 'prefix option, use `path` instead.')
-    if (opts.prefix && !opts.path) opts.path = opts.prefix
+    assignDeprecatedPrefixOption(opts)
     var vPath = isString(opts.path) ? getPathArray(opts.path): prefix
     if (opts.path) opts.path = getPathArray(opts.path)
     nut.get(key, vPath, mergeOpts(opts), function (err, value) {
@@ -206,8 +235,7 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
 
   emitter.readStream = emitter.createReadStream = function (opts) {
     opts = mergeOpts(opts)
-    if (opts.prefix) deprecate.property(opts, 'prefix', 'prefix option, use `path` instead.')
-    if (opts.prefix && !opts.path) opts.path = opts.prefix
+    assignDeprecatedPrefixOption(opts)
     //the opts.path could be relative
     opts.path = getPathArray(opts.path, prefix) || prefix
 

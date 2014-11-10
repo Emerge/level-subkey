@@ -11,12 +11,12 @@ var encode = precodec.encode
 var SEP1 = SUBKEY_SEPS[0][1]
 var SEP2 = SUBKEY_SEPS[0][2]
 var SEP11= SUBKEY_SEPS[1][1] //escaped the SEP1
-
 test('sublevel-path-get', function (t) {
   t.deepEqual(base.sublevels, {})
 
   var foo = base.sublevel('foo')
   var bar = base.sublevel('bar')
+
 
   base.batch([
     { key: 'a', value: 1, type: 'put', path: ['foo'] },
@@ -75,6 +75,31 @@ test('sublevel-path-get-prefix', function (t) {
   base.get("b", {prefix: "bar"}, function(err, v){
     if (err) throw(err)
     t.equal(v, '5')
+    t.end()
+  })
+})
+
+test('sublevel-path-setPath', function (t) {
+  var bar = base.sublevel('bar')
+
+  bar.setPath("../foo")
+  t.equal(bar.path(), '/foo')
+  bar.get("a", function(err, v){
+    if (err) throw(err)
+    t.equal(v, '1')
+    t.end()
+  })
+})
+
+test('sublevel-path-setPathViaObject', function (t) {
+  var bar = base.subkey('bar')
+  var foo = base.subkey('foo')
+ 
+  bar.setPath(foo)
+  t.equal(bar.path(), '/foo')
+  bar.get("a", function(err, v){
+    if (err) throw(err)
+    t.equal(v, '1')
     t.end()
   })
 })
