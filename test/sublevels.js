@@ -23,7 +23,7 @@ test('subsections', function (t) {
   t.deepEqual(foo.sublevels, {'blerg': fooBlerg})
 
   t.strictEqual(foo.sublevel('blerg'), fooBlerg)
-
+  t.deepEqual(fooBlerg.pathAsArray(), ['foo', 'blerg'])
   t.end()
 })
 
