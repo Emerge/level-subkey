@@ -3,7 +3,7 @@
 The level-subkey is modified from [level-sublevel](https://github.com/dominictarr/level-sublevel).
 
 The level-subkey use the path to separate sections of levelup, with hooks!
-these sublevels are called subkey.
+these sublevels are called dynamic subkey.
 
 [![build status](https://secure.travis-ci.org/snowyu/level-subkey.png)](https://travis-ci.org/snowyu/level-subkey)
 
@@ -14,12 +14,11 @@ This module allows you to create a hierarchy data store with
 kinda like tables in an sql database, but hierarchical, evented, and ranged,
 for real-time changing data.
 
-## level-sublevel@7 **BREAKING CHANGES** via Riceball LEE
+## Main Features different from level-sublevel
 
-* broken compatibility totally from v8.0.0.
 * dynamic sublevels via key path
 * the keys are _encoded_ has changed, and _this means
-you cannot run 7 on a database you created with 6_.
+you cannot run level-subkey on a database you created with level-sublevel
 * hierarchy data store like path now.
 * rename options.prefix to options.path
   * the path can be a sublevel object, a key path string, or a path array.
@@ -46,6 +45,7 @@ you cannot run 7 on a database you created with 6_.
     * '/path/key/.attribute/#subkey'
     * optimalize performance for searching, use the new SUBKEY_SEPS design.
   * usage:
+
         var precodec = require('sublevel/codec')
         precodec.SUBKEY_SEPS = ["/|-", "#.+"] //the first char is the default subkey separator, others are customize separator. 
         sublevel.put("some", "value", {separator: '|'})
@@ -53,7 +53,7 @@ you cannot run 7 on a database you created with 6_.
         sublevel.createReadStream({separator: '.'})
         //it will return all prefixed "|" keys: {key: "|abc", value:....}
 + createWriteStream supports
-  * Note: the writeStream do not support the options.path, options.separator parameters. 
+  * Note: the writeStream do not support the options.path, options.separator parameters.
 * [bug] fixed the hooks may be memory leak when free sublevel.
   * https://github.com/dominictarr/level-sublevel/issues/38
   * sublevel.close will deregister hooks now.
@@ -69,6 +69,23 @@ you cannot run 7 on a database you created with 6_.
   + the next option on options, this is a raw key ensure the readStream/pathStream return keys is greater than the key.
     * note: use this will replace the gt or lt(reverse) option.
 
+
+## todo
+
++ index the integer and json object key on some subkey.
+  * mechanism:1
+    + !customize precodec in subkey()'s options
+    + codec option: bytewise
+    + store the ".codec" attribute to subkey.
+    * disadvantage: performance down
+    * advantage: more flexible codec.
+  * mechanism:2
+    * extent the current codec to support index integer and json object
+    * advantage: .
+    * disadvantage: performance down a little, key human-readable down a little.
+      * the integer and json object can not be readable.
+
+
 ## Main Concepts
 
 * Key Path
@@ -81,6 +98,52 @@ you cannot run 7 on a database you created with 6_.
 Unstable: Expect patches and features, possible api changes.
 
 This module is working well, but may change in the future as its use is further explored.
+
+## Internal Storage Format for Key
+
+The internal key path storage like file path, but the path separator can be customize.
+
++ supports subkey uses other separators, and you can change the default keys separator
+  * the '%' can not be used as separator, it is the escape char.
+  * the default subkey's separator is "#" if no any separator provided.
+  * the others can have the subkeys too:
+    * '/path/key/.attribute/#subkey'
+    * optimalize performance for searching, use the new SUBKEY_SEPS design.
+* customize usage:
+
+``` js
+    var precodec = require('sublevel/codec')
+    precodec.SUBKEY_SEPS = ["/|-", "#.+"] //the first char is the default subkey separator, others are customize separator. 
+    sublevel.put("some", "value", {separator: '|'})
+    //list all key/value on separator "|"
+    sublevel.createReadStream({separator: '.'})
+    //it will return all prefixed "|" keys: {key: "|abc", value:....}
+```
+
+* the default SUBKEY_SEPS is ['/.!', '#\*&']
+
+``` js
+var stuff = db.subkey('stuff')
+var animal = stuff.subkey('animal')
+var plant = stuff.subkey('plant')
+
+animal.put("pig", value, function () {})
+// stored raw key is : "/stuff/animal#pig"
+// decoded key is: "/stuff/animal/pig"
+animal.put("../plant/cucumber", value, function (err) {})
+// stored raw key is : "/stuff/plant#cucumber"
+// decoded key is: "/stuff/animal/cucumber"
+db.put("/stuff/animal/pig/.mouth", value, function(err){})
+// stored raw key is : "/stuff/animal/pig*mouth"
+// decoded key is: "/stuff/animal/pig/.mouth"
+db.put("/stuff/animal/pig/.ear", value, function(err){})
+// stored raw key is : "/stuff/animal/pig*ear"
+// decoded key is: "/stuff/animal/pig/.ear"
+db.put("/stuff/animal/pig/.ear/.type", value, function(err){})
+// stored raw key is : "/stuff/animal/pig/.ear*type"
+// decoded key is: "/stuff/animal/pig/.ear/.type"
+
+```
 
 ## Example
 
@@ -108,13 +171,13 @@ with the outer db when saving or reading!
 
 ``` js
 var LevelUp = require('levelup')
-var Sublevel = require('level-subkey')
+var Subkey = require('level-subkey')
 
-var db = Sublevel(LevelUp('/tmp/sublevel-example'))
+var db = Subkey(LevelUp('/tmp/sublevel-example'))
 
 //old sublevel usage:
-var stuff = db.subkey('stuff')
-var animal = stuff.subkey('animal')
+var stuff = db.subkey('stuff')      //or stuff = db.path('stuff')
+var animal = stuff.subkey('animal') //or animal = stuff.path('animal')
 var plant = stuff.subkey('plant')
 
 //put a key into animal!
@@ -133,7 +196,8 @@ db.put("/stuff/animal/pig/.ear", value, function(err){})
 db.createReadStream({path: "/stuff/animal/pig", separator="."})
 //return: {".mouth":value, ".ear":value}
 
-//list all pig's attributes
+//list all pig's path(excludes the subkeys)
+//it will search from "/stuff/\x00" to "/stuff/\uffff"
 db.createPathStream({path: "/stuff"}) //= db.createReadStream({separator:'/', separatorRaw: true, start:'0'})
 //return:{ 'animal/pig': value, 'animal/pig.ear': value, 'animal/pig.mouth': value, 'plant/cucumber': value}
 
@@ -143,6 +207,16 @@ db.createReadStream({path: "/stuff/animal"})
 
 //list all keys in "/stuff/plant"
 animal.createReadStream({start: "../plant"})
+
+
+//write by stream
+var wsAnimal = animal.createWriteStream()
+wsAnimal.on('err', function(err){throw err})
+wsAnimal.on('close', function(){})
+wsAnimal.write({key: "cow", value:value})
+wsAnimal.write({key: "/stuff/animal/cow", value:value})
+wsAnimal.write({key: "../plant/tomato", value:value})
+wsAnimal.end()
 
 //crazy usage:
 //the path will always be absolute key path.
@@ -227,7 +301,7 @@ instead of the current section, similar to the `pre` hook above.
 var sub1 = db.subkey('SUB_1')
 var sub2 = db.subkey('SUB_2')
 
-sub.batch([
+sub2.batch([
   {key: 'key', value: 'Value', type: 'put'},
   {key: 'key', value: 'Value', type: 'put', path: sub2},
   {key: '../SUB_1/key', value: 'Value', type: 'put', path: sub2},
