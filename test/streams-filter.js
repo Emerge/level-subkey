@@ -11,14 +11,14 @@ require('tape')('sublevel', function (t) {
   var db = level('test-sublevel-readstream-filter')
   var base = sublevel(db)
 
-  var a    = base.sublevel('A')
+  var a    = base.subkey('A')
 
   var i = 0
 
   function all(db, opts, cb) {
     var o
     opts = opts || {}
-    if (!opts.end) opts.end = '\xff\xff'
+    if (!opts.end) opts.end = '\uffff'
     db.createReadStream(opts).on('data', function (data) {
       if (data.key) {
           if(!o) o={}

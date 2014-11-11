@@ -5,7 +5,7 @@ var through = require('through')
 
 var base = SubLevel(levelup('test-sublevel'))
 
-var sub = base.sublevel('levelup-users')
+var sub = base.subkey('levelup-users')
 
 
 function put (user, contrib) {

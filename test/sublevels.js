@@ -7,36 +7,36 @@ var test = require('tape')
 test('subsections', function (t) {
   t.deepEqual(base.sublevels, {})
 
-  var foo = base.sublevel('foo')
-  var bar = base.sublevel('bar')
+  var foo = base.subkey('foo')
+  var bar = base.subkey('bar')
 
   t.deepEqual(base.sublevels, {'foo': foo, 'bar': bar})
   t.deepEqual(foo.sublevels, {})
 
-  t.strictEqual(base.sublevel('foo'), foo)
-  t.strictEqual(base.sublevel('bar'), bar)
+  t.strictEqual(base.subkey('foo'), foo)
+  t.strictEqual(base.subkey('bar'), bar)
 
   console.log('path:', foo.path())
   console.log('path:', bar.path())
 
-  var fooBlerg = foo.sublevel('blerg')
+  var fooBlerg = foo.subkey('blerg')
   t.deepEqual(foo.sublevels, {'blerg': fooBlerg})
 
-  t.strictEqual(foo.sublevel('blerg'), fooBlerg)
+  t.strictEqual(foo.subkey('blerg'), fooBlerg)
   t.deepEqual(fooBlerg.pathAsArray(), ['foo', 'blerg'])
   t.end()
 })
 
 test('sublevels-hooks-free', function (t) {
-  var bar = base.sublevel('newBar')
+  var bar = base.subkey('newBar')
   t.deepEqual(bar.sublevels, {})
-  var barLess = bar.sublevel('Less')
-  var barMore = bar.sublevel('more')
+  var barLess = bar.subkey('Less')
+  var barMore = bar.subkey('more')
 
   t.deepEqual(bar.sublevels, {'Less': barLess, 'more': barMore})
 
-  t.strictEqual(bar.sublevel('more'), barMore)
-  t.strictEqual(bar.sublevel('Less'), barLess)
+  t.strictEqual(bar.subkey('more'), barMore)
+  t.strictEqual(bar.subkey('Less'), barLess)
 
   bar.pre(function(){})
   bar.post(function(){})

@@ -9,7 +9,7 @@ var tape = require('tape')
 
 tape('keys', function (t) {
 
-  var db = sublevel(level()).sublevel('test')
+  var db = sublevel(level()).subkey('test')
 
   pull.count(10)
     .pipe(pull.map(function (i) {

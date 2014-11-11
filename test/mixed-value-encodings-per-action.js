@@ -6,8 +6,8 @@ var test = require('tape')
 test('subsections support mixed encodings per put', function (t) {
   t.plan(10)
 
-  var foo = base.sublevel('foo')
-  var bar = base.sublevel('bar')
+  var foo = base.subkey('foo')
+  var bar = base.subkey('bar')
 
   foo.put('foo1', 'foo1-value', { valueEncoding: 'utf8' }, function () {
     bar.put('bar1', { obj: 'ect' }, { valueEncoding: 'json' }, function () {

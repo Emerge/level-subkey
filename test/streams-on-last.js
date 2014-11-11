@@ -20,9 +20,9 @@ require('rimraf').sync('/tmp/test-sublevel-stream-last')
 var db = level('test-sublevel-stream-last')
 var base = sublevel(db)
 
-var a    = base.sublevel('A')
-var b    = base.sublevel('B')
-var aI    = a.sublevel('I')
+var a    = base.subkey('A')
+var b    = base.subkey('B')
+var aI    = a.subkey('I')
 
 function encodeKey(s, separator) {
     var p = path.dirname(s), k=path.basename(s)
@@ -35,8 +35,9 @@ function encodeKey(s, separator) {
   function all(db, opts, cb) {
     var o
     opts = opts || {}
-    if (!opts.end) opts.end = '\xff\xff'
+    if (!opts.end) opts.end = '\uffff'
     db.createReadStream(opts).on('data', function (data) {
+      console.log("readStream:", data)
       if (data.key) {
           if(!o) o={}
           o[data.key.toString()] = data.value.toString()

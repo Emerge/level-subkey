@@ -15,7 +15,7 @@ tape('inherit json encoding', function (t) {
       if(err) throw err
 
       t.deepEqual(value, {ok: true})
-      var db2 = db.sublevel('sub')
+      var db2 = db.subkey('sub')
       db2.put('hello', {ok: true}, function (err) { 
         if(err) throw err
 
@@ -40,7 +40,7 @@ tape('override json encoding', function (t) {
       if(err) throw err
 
       t.deepEqual(value, [].slice.call(buf))
-      var db2 = db.sublevel('sub', {valueEncoding: 'binary'})
+      var db2 = db.subkey('sub', {valueEncoding: 'binary'})
       db2.put('hello', buf, function (err) { 
         if(err) throw err
 

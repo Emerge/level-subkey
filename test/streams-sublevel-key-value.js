@@ -7,7 +7,7 @@ var test = require('tape')
 test('sublevel value streams emit values and sublevel key streams emit keys', function (t) {
   t.plan(2)
 
-  var foo = base.sublevel('foo')
+  var foo = base.subkey('foo')
 
   foo.put('foo1', 'foo1-value', function () {
 

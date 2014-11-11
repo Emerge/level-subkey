@@ -6,8 +6,8 @@ var test = require('tape')
 
 test('subsections', function (t) {
 
-  var foo = base.sublevel('foo')
-  var bar = base.sublevel('bar')
+  var foo = base.subkey('foo')
+  var bar = base.subkey('bar')
 
   var n, m, o = m = n = 0
   var bp1, bp, b, q, r = q = b = bp = bp1 = 0

@@ -14,8 +14,8 @@ var SEP11= SUBKEY_SEPS[1][1] //escaped the SEP1
 test('sublevel-path-get', function (t) {
   t.deepEqual(base.sublevels, {})
 
-  var foo = base.sublevel('foo')
-  var bar = base.sublevel('bar')
+  var foo = base.subkey('foo')
+  var bar = base.subkey('bar')
 
 
   base.batch([
@@ -80,7 +80,7 @@ test('sublevel-path-get-prefix', function (t) {
 })
 
 test('sublevel-path-setPath', function (t) {
-  var bar = base.sublevel('bar')
+  var bar = base.subkey('bar')
 
   bar.setPath("../foo")
   t.equal(bar.path(), '/foo')

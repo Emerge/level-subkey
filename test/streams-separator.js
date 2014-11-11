@@ -23,9 +23,9 @@ require('rimraf').sync('/tmp/test-sublevel-readstream-separator')
 var db = level('test-sublevel-readstream-separator')
 var base = sublevel(db)
 
-var a    = base.sublevel('A')
-var b    = base.sublevel('B')
-var stuff= base.sublevel('stuff')
+var a    = base.subkey('A')
+var b    = base.subkey('B')
+var stuff= base.subkey('stuff')
 
 function encodeKey(s, separator) {
     var p = path.dirname(s), k=path.basename(s)
@@ -38,7 +38,7 @@ function encodeKey(s, separator) {
   function all(db, opts, cb) {
     var o
     opts = opts || {}
-    if (!opts.end) opts.end = '\xff\xff'
+    if (!opts.end) opts.end = '\uffff'
     db.createReadStream(opts).on('data', function (data) {
       if (data.key) {
           if(!o) o={}

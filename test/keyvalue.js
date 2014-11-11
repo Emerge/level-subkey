@@ -4,7 +4,7 @@ var levelup = require('level-test')()
 
 var base = SubLevel(levelup('test-sublevel'))
 
-var sub = base.sublevel('fruit')
+var sub = base.subkey('fruit')
 
 var docs = {
   '001': 'apple',

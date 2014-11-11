@@ -81,7 +81,7 @@ function makeTest(db, name) {
       all(db, {min: 'c~', max: 'd~'}, function (err, all) {
         console.log(all)
         order(all, {
-          d: 'durian',
+          d: 'durian'
         })
       })
 
@@ -105,21 +105,21 @@ function makeTest(db, name) {
       all(db, {min: 'c~', max: 'd~', reverse: true}, function (err, all) {
         console.log(all)
         order(all, {
-          d: 'durian',
+          d: 'durian'
         })
       })
     })
   })
 }
 
-var A = base.sublevel('A')
+var A = base.subkey('A')
 makeTest(base, 'simple')
 
 makeTest(A, 'sublevel')
 
 makeTest(base, 'simple, again')
 
-var A_B = A.sublevel('B')
+var A_B = A.subkey('B')
 makeTest(A_B, 'sublevel2')
 
 makeTest(A, 'sublevel, again')

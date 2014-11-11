@@ -10,8 +10,8 @@ require('tape')('sublevel', function (t) {
 
   var base = sl('test-sublevel')
 
-  var a   = base.sublevel('A')
-  var a_a = a.sublevel('A')
+  var a   = base.subkey('A')
+  var a_a = a.subkey('A')
 
   var as = {}
   var aas = {}

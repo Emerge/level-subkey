@@ -8,7 +8,7 @@ require('tape')('sublevel', function (t) {
   var db = level('test-sublevel-readstream')
   var base = sublevel(db)
 
-  var a    = base.sublevel('A')
+  var a    = base.subkey('A')
 
   var i = 0
 

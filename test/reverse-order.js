@@ -6,8 +6,8 @@ var Sublevel = require('../');
 var timestamp = require('monotonic-timestamp')
 
 var db = Sublevel( LevelUp('test-level-sublevel_myDB', {valueEncoding: 'json'}) );
-var groups = db.sublevel('groups');
-var topics = db.sublevel('topics');
+var groups = db.subkey('groups');
+var topics = db.subkey('topics');
 
 var timeGroup1 = timestamp();
 var timeGroup2 = timestamp();

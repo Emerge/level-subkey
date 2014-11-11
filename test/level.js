@@ -208,14 +208,14 @@ codex.forEach(function (codec) {
     var db1 = create(codec)
 
     test(db1)
-    test(db1.sublevel('foo'))
-    test(db1.sublevel('foo').sublevel('blah'))
+    test(db1.subkey('foo'))
+    test(db1.subkey('foo').subkey('blah'))
 
     var db3 = create(codec, createTestDb())
 
     test(db3)
-    test(db3.sublevel('foo'))
-    test(db3.sublevel('foo').sublevel('blah'))
+    test(db3.subkey('foo'))
+    test(db3.subkey('foo').subkey('blah'))
 
   })
 
