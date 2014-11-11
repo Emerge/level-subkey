@@ -71,6 +71,7 @@ expectedResults[encodeKey('/A/.1.a')] = _a
 expectedResults[encodeKey('/A/.2.b', '.')] = _b
 expectedResults[encodeKey('/A/.3.c', '.')] = _c
 expectedResults[encodeKey('/A/.3.d', '.')] = _d
+expectedResults[encodeKey('/B/.3.e', '.')] = _d
 expectedResults[encodeKey('/A/.3.c/abc')] = _c
 expectedResults[encodeKey('/A/'+SEP2+'a', '')] = _d+"7"
 expectedResults[encodeKey('/A/'+SEP2+'b')] = _d+"8"
@@ -104,6 +105,7 @@ console.log(expectedResults)
     {key: '2.b', value: _b , type: 'put', separator: '.'},
     {key: '3.c', value: _c , type: 'put', separator: '.'},
     {key: '3.d', value: _d , type: 'put', separator: '.'},
+    {key: '.3.e', value: _d , type: 'put', separator: '.', path: '/B'},
     {key: '3.cKey', value: _c , type: 'put'},
     {key: 'd4', value: _d+"4" , type: 'put'},
     {key: 'd5', value: _d+"5" , type: 'put'},

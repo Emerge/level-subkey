@@ -22,9 +22,14 @@ you cannot run level-subkey on a database you created with level-sublevel
 * hierarchy data store like path now.
 * rename options.prefix to options.path
   * the path can be a sublevel object, a key path string, or a path array.
+  * mark the options.prefix deprecated.
 * rename sublevel.prefix() to sublevel.pathAsArray()
+  * mark the sublevel.prefix() deprecated.
+* rename sublevel.sublevel() to sublevel.subkey()
+  * mark the sublevel.sublevel() deprecated.
 + sublevel.path() return this sublevel key path.
   * the sublevel.path and options.path are always absolute key path.
++ sublevel.path(aPath) return a new subkey object(same as subkey()).
 + options.absoluteKey: if true return the key as absolute key path.
 + sublevel.subkeys()
 + minimatch supports for hook and search.
@@ -68,14 +73,16 @@ you cannot run level-subkey on a database you created with level-sublevel
     * the last return undefined if no more data.
   + the next option on options, this is a raw key ensure the readStream/pathStream return keys is greater than the key.
     * note: use this will replace the gt or lt(reverse) option.
-
+* prehook 
+  + when add a key in pre hook, the new triggerBefore/triggerAfter options can disable trigger the added key to prevent the endless loop.
+  * join separator before precodec.encode on the operation, using prefix separator always if the key is string.
 
 ## todo
 
 + index the integer and json object key on some subkey.
   * mechanism:1
-    + !customize precodec in subkey()'s options
-    + codec option: bytewise
+    + customize precodec in subkey()'s options
+      + codec option: bytewise
     + store the ".codec" attribute to subkey.
     * disadvantage: performance down
     * advantage: more flexible codec.
@@ -84,13 +91,20 @@ you cannot run level-subkey on a database you created with level-sublevel
     * advantage: .
     * disadvantage: performance down a little, key human-readable down a little.
       * the integer and json object can not be readable.
-
++ LRU-cache supports
+  + cache option(boolean, default: true)
++ subkey with dynamic attributes supports
+  * these attributes are stored in database.
 
 ## Main Concepts
+
+The key is always string only.
 
 * Key Path
 * Key
 * Key attributes
+* Value
+  * the value is json object format currently.
 
 
 ## Stability
@@ -225,6 +239,21 @@ animal.setPath(plant)
 //now the "animal" is plant in fact.
 animal.get("cucumber", function(err, value){})
 
+```
+
+### subkey with dynamic attributes supports
+
+``` js
+var LevelUp = require('levelup')
+var Subkey = require('level-subkey')
+
+var db = Subkey(LevelUp('/tmp/sublevel-example'))
+
+var pig = db.subkey('/stuff/animal/pig')
+
+pig.attributes['mouth'] = value
+pig.save(function(err){})  // = db.put("/stuff/animal/pig/.mouth", value, function(err){})
+
 
 ```
 
@@ -235,6 +264,27 @@ do all sorts of clever stuff, like generating views or
 logs when records are inserted!
 
 Records added via hooks will be atomically inserted with the triggering change.
+
+
+### db.pre/post()
+
+1. subkey.pre(function(op, add))
+2. subkey.pre(aKeyPattern, function(op, add))
+3. subkey.pre(aRangeObject, function(op, add))
+
+```js
+//you should be careful of using the add() function
+//maybe endless loop in it. u can disable the trigger
+add({
+    key:...,
+    value:...,
+    type:'put' or 'del',
+    triggerBefore: false, //defalut is true. whether trigger this key on pre hook.
+    triggerAfter: false   //defalut is true. whether trigger this key on post hook.
+ 
+})
+add(false): abondon this operation(remove it from the batch).
+```
 
 ### Hooks Example
 
@@ -250,7 +300,7 @@ db.pre(function (ch, add) {
     value: ch.key, 
     type: 'put',
     // NOTE: pass the destination db to add the value to that subsection!
-    parent: sub
+    path: sub
   })
 })
 
