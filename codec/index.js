@@ -11,6 +11,10 @@ function isString(s) {
   return "string" === typeof s
 }
 
+exports.__defineGetter__("PATH_SEP", function() {
+  return PATH_SEP
+})
+
 exports.__defineGetter__("SUBKEY_SEP", function() {
   return SUBKEY_SEP
 })
@@ -123,6 +127,5 @@ exports.buffer = false
 
 exports.lowerBound = '\x00'
 exports.upperBound = '\uffff'
-exports.PATH_SEP = PATH_SEP
 
 
