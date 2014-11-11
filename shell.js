@@ -204,14 +204,17 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
     })
   }
 
-  emitter.subkey = function (name, opts) {
-    return emitter._sublevels['$' + name] =
-      emitter._sublevels['$' + name] || sublevel(nut, prefix.concat(name), createStream, mergeOpts(opts))
+  emitter.subkey = function (name, opts, readyCallback) {
+    //TODO: cache the subkey object on nut.
+    var vName = '$' + name
+    var result = emitter._sublevels[vName] =
+      emitter._sublevels[vName] || sublevel(nut, prefix.concat(name), createStream, mergeOpts(opts))
+    return result
   }
 
   emitter.sublevel = deprecate['function'](function(name, opts) {
     return emitter.subkey(name, opts);
-  }, 'sublevel, use `subkey` instead.');
+  }, 'sublevel(), use `subkey(name)` or `path(name)` instead.');
 
   emitter.pre = function (key, hook) {
       var unhook = _addHook(key, hook, nut.pre)
@@ -286,7 +289,6 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
     return emitter.createReadStream(opts)
   }
 
-  //todo:
   emitter.writeStream = emitter.createWriteStream = function(opts) {
     opts = mergeOpts(opts)
     return new WriteStream(opts, emitter)
