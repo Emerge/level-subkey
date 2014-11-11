@@ -10,7 +10,7 @@ test('subsections', function (t) {
   var bar = base.subkey('bar')
 
   var n, m, o = m = n = 0
-  var bp1, bp, b, q, r = q = b = bp = bp1 = 0
+  var bo, bp1, bp, b, q, r = q = b = bp = bp1 = bo = 0
 
   foo.post(function (op) {
     n ++
@@ -56,6 +56,11 @@ test('subsections', function (t) {
     bp1 ++
   })
 
+  bar.post({gte: '.\u0000', lte: '.\uffff'},function (op) {
+    t.equal(op.type, 'put')
+    bo ++
+  })
+
   base.batch([
     { key: 'a', value: 1, type: 'put', path: foo },
     { key: 'k', value: 2, type: 'put', path: foo },
@@ -77,6 +82,7 @@ test('subsections', function (t) {
     t.equal(bp1, 3)
     t.equal(otherPreTriggered, false, ".other should not be triggered on prehook")
     t.equal(other2PreTriggered, true, ".other2 should be triggered on prehook")
+    t.equal(bo, 3)
 
     t.end()
   })
