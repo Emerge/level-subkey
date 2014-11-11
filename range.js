@@ -34,7 +34,7 @@ function compare (a, b) {
 //this assumes that the prefix is of the form:
 // [Array, string]
 
-//a=range, b=key =[pathArray, string]
+//a=range b=key a,b=[pathArray, key(string)]
 function prefix (a, b) {
   if(a.length > b.length) return false
   var l = a.length - 1
@@ -48,7 +48,7 @@ function prefix (a, b) {
     && minimatch(lastB, lastA) === false)
       return false
   
-  //handle cas where there is no key prefix
+  //handle case where there is no key prefix
   //(a hook on an entire sublevel)
   if(a.length == 1 && isArrayLike(lastA)) l ++
   

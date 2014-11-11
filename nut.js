@@ -152,17 +152,30 @@ exports = module.exports = function (db, precodec, codec) {
         db.once.apply(db)
     },
     apply: function (ops, opts, cb) {
+      function prepare(aOperation) {
+        if (aOperation.separator && isString(aOperation.key)
+                && aOperation.separator !== PATH_SEP
+                && aOperation.key.length > 0 && aOperation.key[0] !== aOperation.separator) {
+          aOperation.key = aOperation.separator + aOperation.key
+          aOperation.separator = undefined
+        }
+        if (!aOperation.separator) delete aOperation.separator
+        if (aOperation.path) {
+          addEncodings(aOperation, aOperation.path) //if aOperation.path is a sublevel object.
+          aOperation.path = getPathArray(aOperation.path)
+        }
+        aOperation._keyPath = resolveKeyPath(aOperation.path, aOperation.key)
+      }
       //apply prehooks here.
       for(var i = 0; i < ops.length; i++) {
         var op = ops[i]
-        addEncodings(op, op.path) //if op.path is a sublevel object.
-        op.path = getPathArray(op.path)
-        op._keyPath = resolveKeyPath(op.path, op.key)
-        prehooks.trigger(op._keyPath, [op, add, ops])
-        function add(op) {
-          if(op === false) return delete ops[i]
-          op._keyPath = resolveKeyPath(op.path, op.key)
-          ops.push(op)
+        prepare(op)
+        if (op.triggerBefore !== false) prehooks.trigger(op._keyPath, [op, add, ops])
+        function add(aOperation) {
+          if(aOperation === false) return delete ops[i]
+          if (!aOperation.path) aOperation.path = op.path
+          prepare(aOperation)
+          ops.push(aOperation)
         }
       }
 
@@ -193,7 +206,7 @@ exports = module.exports = function (db, precodec, codec) {
           function (err) {
               if(err) return cb(err)
             ops.forEach(function (op) {
-              posthooks.trigger([op.path, op.key], [op])
+              if (op.triggerAfter !== false) posthooks.trigger([op.path, op.key], [op])
             })
             cb()
           }
@@ -337,3 +350,4 @@ exports.resolveKeyPath = resolveKeyPath
 exports.FILTER_INCLUDED =  0
 exports.FILTER_EXCLUDED =  1
 exports.FILTER_STOPPED  = -1
+
