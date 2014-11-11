@@ -20,7 +20,7 @@ var WriteStream = require('levelup/lib/write-stream')
 
 deprecate.assignProperty = function (object, deprecatedProp, currentProp) {
     if (object[deprecatedProp]) {
-      deprecate(deprecatedProp+' property, use `'+currentProp+'` instead.')
+      this(deprecatedProp+' property, use `'+currentProp+'` instead.')
       if (!object[currentProp]) object[currentProp] = object[deprecatedProp]
       delete object[deprecatedProp]
     }
@@ -83,6 +83,15 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
           return false
       }
   }
+  function _addHook(key, callback, hooksAdd) {
+      if(isFunction(key)) return hooksAdd([prefix], key)
+      if(isString(key))   return hooksAdd(resolveKeyPath(prefix, key), callback)
+      if(isObject(key))   return hooksAdd(addpre(prefix, key), callback)
+
+      //TODO: handle ranges, needed for level-live-stream, etc.
+      throw new Error('not implemented yet')
+  }
+
   function assignDeprecatedPrefixOption(options) {
     deprecate.assignProperty(options, 'prefix', 'path')
     /*
@@ -203,15 +212,6 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
   emitter.sublevel = deprecate['function'](function(name, opts) {
     return emitter.subkey(name, opts);
   }, 'sublevel, use `subkey` instead.');
-
-  function _addHook(key, callback, hooksAdd) {
-      if(isFunction(key)) return hooksAdd([prefix], key)
-      if(isString(key))   return hooksAdd(resolveKeyPath(prefix, key), callback)
-      if(isObject(key))   return hooksAdd(addpre(prefix, key), callback)
-
-      //TODO: handle ranges, needed for level-live-stream, etc.
-      throw new Error('not implemented yet')
-  }
 
   emitter.pre = function (key, hook) {
       var unhook = _addHook(key, hook, nut.pre)
