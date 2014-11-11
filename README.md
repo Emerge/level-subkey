@@ -93,8 +93,6 @@ you cannot run level-subkey on a database you created with level-sublevel
       * the integer and json object can not be readable.
 + LRU-cache supports
   + cache option(boolean, default: true)
-+ subkey with dynamic attributes supports
-  * these attributes are stored in database.
 
 ## Main Concepts
 
