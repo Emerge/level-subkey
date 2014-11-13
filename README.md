@@ -239,21 +239,6 @@ animal.get("cucumber", function(err, value){})
 
 ```
 
-### subkey with dynamic attributes supports
-
-``` js
-var LevelUp = require('levelup')
-var Subkey = require('level-subkey')
-
-var db = Subkey(LevelUp('/tmp/sublevel-example'))
-
-var pig = db.subkey('/stuff/animal/pig')
-
-pig.attributes['mouth'] = value
-pig.save(function(err){})  // = db.put("/stuff/animal/pig/.mouth", value, function(err){})
-
-
-```
 
 ## Hooks
 
