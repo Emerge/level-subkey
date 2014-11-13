@@ -146,10 +146,10 @@ exports = module.exports = function (db, precodec, codec) {
         return db.close(cb)
     },
     on: function() {
-        db.on.appy(db)
+        if (db.on) db.on.apply(db)
     },
     once: function() {
-        db.once.apply(db)
+        if (db.once) db.once.apply(db)
     },
     apply: function (ops, opts, cb) {
       function prepareKeyPath(aOperation) {
