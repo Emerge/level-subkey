@@ -6,6 +6,7 @@ var SUBKEY_SEPS = ['/.!', '#*&']
 var UNSAFE_CHARS =  SUBKEY_SEPS[0] + SUBKEY_SEPS[1] + '%'
 var PATH_SEP = SUBKEY_SEPS[0][0], SUBKEY_SEP = SUBKEY_SEPS[1][0]
 
+var path = require('../path')
 
 function isString(s) {
   return "string" === typeof s
@@ -99,8 +100,10 @@ exports.encode = function (e) {
       if (hasSep && key[0] === e[2]) key = key.substring(1)
       key = escapeString(key)
   }
-  //console.log("codec.encode:",PATH_SEP + e[0].join(PATH_SEP) + vSeperator + key)
-  return PATH_SEP + e[0].join(PATH_SEP) + vSeperator + key
+  //console.log("codec.encode:",path.join(e[0]) + vSeperator + key)
+  //TODO: I should encode with path.join(e[0], vSeperator + key)) simply in V8.
+  //      all separators are same now.
+  return path.join(e[0]) + vSeperator + key
 }
 
 //return [path, key, separator, realSeparator]
@@ -125,7 +128,7 @@ exports.decode = function (s, aSeparator) {
 
 exports.buffer = false
 
-exports.lowerBound = '\x00'
+exports.lowerBound = '\u0000'
 exports.upperBound = '\uffff'
 
 
