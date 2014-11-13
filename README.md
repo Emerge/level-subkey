@@ -93,6 +93,7 @@ you cannot run level-subkey on a database you created with level-sublevel
       * the integer and json object can not be readable.
 + LRU-cache supports
   + cache option(boolean, default: true)
+- remove the sublevels attributes and just cache it into nut. no memory leak any more.
 
 ## Main Concepts
 
