@@ -17,6 +17,7 @@ var pathArrayToPath = _nut.pathArrayToPath
 
 var errors = require('levelup/lib/errors')
 var WriteStream = require('levelup/lib/write-stream')
+var setImmediate = global.setImmediate || process.nextTick
 
 deprecate.assignProperty = function (object, deprecatedProp, currentProp) {
     if (object[deprecatedProp]) {
@@ -316,7 +317,8 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
         this._sublevels[k].close()
     }
     this._sublevels = {}
-    nut.close(cb)
+    //nut.close(cb)
+    if (isFunction(cb)) setImmediate(cb)
     //process.nextTick(cb || function () {})
   }
 
