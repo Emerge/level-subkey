@@ -104,8 +104,9 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
     */
   }
 
-  //emitter.on = nut.on
-  //emitter.once = nut.once
+  //TODO: maybe should use a general class, not a Emitter class, and bind dome methods.
+  emitter.on = nut.on
+  emitter.once = nut.once
   //the writeStream use db.isOpen and db.once('ready') to ready write stream.
   emitter.isOpen = function(){return nut.isOpen()}
   emitter.put = function (key, value, opts, cb) {

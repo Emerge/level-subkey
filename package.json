@@ -1,7 +1,7 @@
 {
   "name": "level-subkey",
-  "description": "hierarchy partition levelup databases",
-  "version": "7.8.3",
+  "description": "hierarchy partition levelup databases like the file path/folder",
+  "version": "7.8.4",
   "homepage": "https://github.com/snowyu/level-subkey",
   "repository": {
     "type": "git",
