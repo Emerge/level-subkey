@@ -93,8 +93,6 @@ you cannot run level-subkey on a database you created with level-sublevel
       * the integer and json object can not be readable.
 + LRU-cache supports
   + cache option(boolean, default: true)
-+ subkey with dynamic attributes supports
-  * these attributes are stored in database.
 
 ## Main Concepts
 
@@ -241,21 +239,6 @@ animal.get("cucumber", function(err, value){})
 
 ```
 
-### subkey with dynamic attributes supports
-
-``` js
-var LevelUp = require('levelup')
-var Subkey = require('level-subkey')
-
-var db = Subkey(LevelUp('/tmp/sublevel-example'))
-
-var pig = db.subkey('/stuff/animal/pig')
-
-pig.attributes['mouth'] = value
-pig.save(function(err){})  // = db.put("/stuff/animal/pig/.mouth", value, function(err){})
-
-
-```
 
 ## Hooks
 

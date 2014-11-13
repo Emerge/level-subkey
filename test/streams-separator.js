@@ -63,6 +63,9 @@ function filterEmpty(key, value)  {
 }
 
 var expectedResults = {}
+expectedResults[encodeKey('/.attr')] = _c
+expectedResults[encodeKey('/.参数')] = _c
+expectedResults[encodeKey('/A/3.cKey')] = _c
 expectedResults[encodeKey('/A/3.cKey')] = _c
 expectedResults[encodeKey('/A/d4')] = _d+"4"
 expectedResults[encodeKey('/A/d5')] = _d+"5"
@@ -101,6 +104,8 @@ console.log(expectedResults)
   }
 
   a.batch([
+    {key: '/.attr', value: _c , type: 'put'},
+    {key: '/.参数', value: _c , type: 'put', separator: '.'},
     {key: '1.a', value: _a , type: 'put', separator: '.'},
     {key: '2.b', value: _b , type: 'put', separator: '.'},
     {key: '3.c', value: _c , type: 'put', separator: '.'},

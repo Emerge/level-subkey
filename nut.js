@@ -18,7 +18,7 @@ function isObject (f) {
 }
 
 function pathArrayToPath(aPath) {
-    return PATH_SEP + aPath.join(PATH_SEP)
+    return path.join(aPath)
 }
 
 function pathToPathArray(aPath) {
@@ -152,19 +152,35 @@ exports = module.exports = function (db, precodec, codec) {
         db.once.apply(db)
     },
     apply: function (ops, opts, cb) {
-      function prepare(aOperation) {
-        if (aOperation.separator && isString(aOperation.key)
-                && aOperation.separator !== PATH_SEP
-                && aOperation.key.length > 0 && aOperation.key[0] !== aOperation.separator) {
-          aOperation.key = aOperation.separator + aOperation.key
-          aOperation.separator = undefined
+      function prepareKeyPath(aOperation) {
+        var vKey = aOperation.key
+        if (isString(vKey) && vKey.length) {
+            var vPath = path.resolveArray(aOperation.path, vKey)
+            var isAbsolutePath = vPath.shift(0,1)
+            vKey = vPath.pop()
+            if (aOperation.separator && aOperation.separator !== PATH_SEP)
+            {
+              if (vKey[0] !== aOperation.separator) {
+                vKey = aOperation.separator + vKey
+              }
+              if (vKey[0] === aOperation.separator) {
+                aOperation.separator = undefined
+              }
+            }
+            aOperation._keyPath = [vPath, vKey]
+            aOperation.path = vPath
+            aOperation.key = vKey
         }
-        if (!aOperation.separator) delete aOperation.separator
+        else
+         aOperation._keyPath = [aOperation.path, vKey]
+      }
+      function prepare(aOperation) {
         if (aOperation.path) {
           addEncodings(aOperation, aOperation.path) //if aOperation.path is a sublevel object.
           aOperation.path = getPathArray(aOperation.path)
         }
-        aOperation._keyPath = resolveKeyPath(aOperation.path, aOperation.key)
+        prepareKeyPath(aOperation)
+        if (!aOperation.separator) delete aOperation.separator
       }
       //apply prehooks here.
       for(var i = 0; i < ops.length; i++) {
