@@ -199,12 +199,31 @@ exports.normalizeArray = normalizeArray;
     return path.charAt(0) === SEP.PATH_SEP;
   };
 
-  // posix version
+  // path.join can mixture array and string arguments now!
+  // path.join("path1", ["path2", "path3"], "path4")
+  // = path1/path2/path3/path4
   exports.join = function() {
     var path = '';
     var vPathSep = SEP.PATH_SEP;
     for (var i = 0; i < arguments.length; i++) {
       var segment = arguments[i];
+      // Skip empty and invalid entries
+      if (isArray(segment)) {
+          if (segment.length === 0 && path.length === 0) {
+              path = vPathSep
+          } else {
+            segment = segment.filter(Boolean).join(vPathSep);
+            if (segment) {
+              path += vPathSep + segment;
+            }
+          }
+          continue;
+      } else if (!isString(segment)) {
+        throw new TypeError('Arguments to path.resolve must be strings');
+      } else if (!segment) {
+        continue;
+      }
+
       if (!isString(segment)) {
         throw new TypeError('Arguments to path.join must be strings');
       }
