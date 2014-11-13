@@ -277,6 +277,41 @@ tape('stream-path-separatorRaw-start2', function (t) {
     })
 })
 
+tape('stream-path-separator-root', function (t) {
+    all(db, {}, function (err, obj) {
+      if(err) throw err
+      t.deepEqual(obj, expectedResults)
+        all(b, {path:'/', separator:'.'}, function (err, obj) {
+          if(err) throw err
+            console.log(obj)
+            o = {}
+            o['.attr'] = _c
+            o['.参数'] = _c
+          t.deepEqual(obj, o)
+
+
+          t.end()
+        })
+    })
+})
+
+tape('stream-root-separator', function (t) {
+    all(db, {}, function (err, obj) {
+      if(err) throw err
+      t.deepEqual(obj, expectedResults)
+        all(base, {separator:'.'}, function (err, obj) {
+          if(err) throw err
+            console.log(obj)
+            o = {}
+            o['.attr'] = _c
+            o['.参数'] = _c
+          t.deepEqual(obj, o)
+
+
+          t.end()
+        })
+    })
+})
 
   var dataOps = [
         {

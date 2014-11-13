@@ -142,6 +142,7 @@ module.exports = function (format) {
       t.equal(format.encode([["path"], "!", "!"]), '/path/$')
       t.equal(format.encode([["path"], "", "!"]), '/path/$')
       t.equal(format.encode([["path"], "key"]), '/path.key')
+      t.equal(format.encode([[], "\uffff", '!']), '/$\uffff')
       t.deepEqual(format.decode('/path/Key$ABC'), [["path", "Key"], "ABC", "/!"])
       t.deepEqual(format.decode('/path/Key.ABC'), [["path", "Key"], "ABC", "/"])
       t.end()

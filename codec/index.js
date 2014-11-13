@@ -103,7 +103,10 @@ exports.encode = function (e) {
   //console.log("codec.encode:",path.join(e[0]) + vSeperator + key)
   //TODO: I should encode with path.join(e[0], vSeperator + key)) simply in V8.
   //      all separators are same now.
-  return path.join(e[0]) + vSeperator + key
+  var vPath = PATH_SEP
+  if (e[0].length) vPath = path.join(e[0])
+  else if (vSeperator.length >=2 && vSeperator[0] == PATH_SEP) vPath = ""
+  return vPath + vSeperator + key
 }
 
 //return [path, key, separator, realSeparator]
