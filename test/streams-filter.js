@@ -4,7 +4,7 @@ var _nut = require('../nut')
 var FILTER_EXCLUDED = _nut.FILTER_EXCLUDED
 var FILTER_STOPPED = _nut.FILTER_STOPPED
 
-require('tape')('sublevel', function (t) {
+require('tape')('sublevel-streams-filter', function (t) {
 
   require('rimraf').sync('/tmp/test-sublevel-readstream-filter')
 
