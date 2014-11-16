@@ -1,3 +1,4 @@
+var minimatch = require('minimatch')
 var path = require('./path')
 var hooks = require('./hooks')
 var ltgt = require('ltgt')
@@ -30,14 +31,14 @@ function pathToPathArray(aPath) {
         return []
 }
 
-function getPathArray (aPath, prefix) {
+function getPathArray (aPath, aParentPath) {
   if(aPath == null) return aPath
   //is a sublevel object?
   if(isFunction(aPath.pathAsArray)) return aPath.pathAsArray()
   if(isString(aPath)) {
       var result
-      if (prefix) {
-          result = path.resolveArray(prefix, aPath)
+      if (aParentPath) {
+          result = path.resolveArray(aParentPath, aPath)
           result.shift(0,1)
       }
       else result = pathToPathArray(aPath)
@@ -70,9 +71,12 @@ function clone (_obj) {
   return obj
 }
 
+//the nut is a singleton for enhance the levelup's features to support the key path.
+//all subkeys share the same one nut at backend.
 exports = module.exports = function (db, precodec, codec) {
   var prehooks = hooks()
   var posthooks = hooks()
+  var _subkeys = {}  //cache all subkey objects here.
   var waiting = [], ready = false
 
   //aKeyPath=[path, key]
@@ -143,6 +147,9 @@ exports = module.exports = function (db, precodec, codec) {
     },
     open: openDB,
     close: function(cb) {
+        pre.removeAll()
+        post.removeAll()
+        _subkeys = {}
         return db.close(cb)
     },
     on: function() {
@@ -150,6 +157,41 @@ exports = module.exports = function (db, precodec, codec) {
     },
     once: function() {
         if (db.once) db.once.apply(db, arguments)
+    },
+    subkeys: function(aKeyPattern) {
+        var result = {}
+        if (aKeyPattern) {
+            for (var k in _subkeys) {
+                if (minimatch(k, aKeyPattern)) result[k] = _subkeys[k]
+            }
+        } else
+            result = _subkeys
+        return result
+    },
+    createSubkey: function(aKeyPathArray, aNewSubkeyProc) {
+        var vKeyPath = pathArrayToPath(aKeyPathArray)
+        var result = _subkeys[vKeyPath]
+        if (result) {
+            result['_reference']++
+        } else {
+            result = aNewSubkeyProc()
+            result['_reference'] = 1
+            _subkeys[vKeyPath] = result
+
+        }
+        return result
+    },
+    freeSubkey: function(aKeyPathArray) {
+        var vKeyPath = pathArrayToPath(aKeyPathArray)
+        var result = _subkeys[vKeyPath]
+        if (result) {
+            var vReference = --result['_reference']
+            if (vReference <= 0)
+                return delete _subkeys[vKeyPath]
+            else
+                return vReference
+        } else
+            return false
     },
     apply: function (ops, opts, cb) {
       function prepareKeyPath(aOperation) {
