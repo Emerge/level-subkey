@@ -63,6 +63,7 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
 
   prefix = prefix || []
 
+
   function errback (err) { if (err) emitter.emit('error', err) }
 
   createStream = createStream || function (e) { return e }
@@ -209,8 +210,9 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
   }
 
   emitter.subkey = function (name, opts, readyCallback) {
-    //TODO: cache the subkey object on nut.
-    var vKeyPath = path.normalizeArray(prefix.concat(name))
+    var vKeyPath = path.resolveArray(prefix, name)
+    vKeyPath.shift(0,1)
+
     result = nut.createSubkey(vKeyPath, sublevel.bind(null, nut, vKeyPath, createStream, mergeOpts(opts)))
     return result
   }
