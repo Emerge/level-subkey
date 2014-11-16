@@ -72,4 +72,14 @@ test('sublevels-hooks-free', function (t) {
 
 
 
+test('sublevels-create-subkey-with-anyPath', function (t) {
+  var foo = base.subkey('foo')
+  var bar = foo.subkey('../bar')
+  t.deepEqual(bar.pathAsArray(), ['bar'])
+  var fooEggBig = foo.subkey('egg/big')
+  t.deepEqual(fooEggBig.pathAsArray(), ['foo', 'egg', 'big'])
+  t.deepEqual(bar.subkey('/abs/23/中央').pathAsArray(), ['abs', '23', '中央'])
+  t.end()
+})
+
 
