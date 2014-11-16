@@ -19,7 +19,11 @@ module.exports = function (compare) {
     //remove all listeners within a range.
     //this will be used to close a sublevel.
     removeAll: function (range) {
-      throw new Error('not implemented')
+      if (range === undefined) {
+          hooks = []
+      } else {
+        throw new Error('not implemented')
+      }
     },
 
     trigger: function (key, args) {

@@ -43,11 +43,13 @@ var version = require('./package.json').version
 
 var sublevel = module.exports = function (nut, prefix, createStream, options) {
   var emitter = new EventEmitter()
-  emitter._sublevels = {}
+
   emitter.__defineGetter__("sublevels", function(){
+      deprecate("sublevels, all subkeys(sublevels) have cached on nut now.")
+      var r = nut.subkeys(path.join(prefix, '*'))
       var result = {}
-      for (var k in this._sublevels) {
-          result[k.substring(1)] = this._sublevels[k]
+      for (var k in r) {
+          result[path.basename(k)] = r[k]
       }
       return result
   })
@@ -208,9 +210,8 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
 
   emitter.subkey = function (name, opts, readyCallback) {
     //TODO: cache the subkey object on nut.
-    var vName = '$' + name
-    var result = emitter._sublevels[vName] =
-      emitter._sublevels[vName] || sublevel(nut, prefix.concat(name), createStream, mergeOpts(opts))
+    var vKeyPath = path.normalizeArray(prefix.concat(name))
+    result = nut.createSubkey(vKeyPath, sublevel.bind(null, nut, vKeyPath, createStream, mergeOpts(opts)))
     return result
   }
 
@@ -307,6 +308,17 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
       nut.open(cb)
   }
   */
+  emitter.closeSubkeys = function(aKeyPattern) {
+      if (!aKeyPattern) {
+          aKeyPattern = path.join(prefix, '*')
+      } else {
+          aKeyPattern = path.resolve(prefix, aKeyPattern)
+      }
+      var vSubkeys = nut.subkeys(aKeyPattern)
+      for (var k in vSubkeys) {
+          vSubkeys[k].close()
+      }
+  }
   emitter.close = function (cb) {
     //deregister all hooks
     var unhooks = this.unhooks
@@ -314,10 +326,8 @@ var sublevel = module.exports = function (nut, prefix, createStream, options) {
         unhooks[i]()
     }
     this.unhooks = []
-    for (var k in this._sublevels) {
-        this._sublevels[k].close()
-    }
-    this._sublevels = {}
+    this.closeSubkeys()
+    nut.freeSubkey(prefix)
     //nut.close(cb)
     if (isFunction(cb)) setImmediate(cb)
     //process.nextTick(cb || function () {})

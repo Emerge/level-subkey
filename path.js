@@ -112,7 +112,8 @@ exports.normalizeArray = normalizeArray;
   // 'root' is just a slash, or nothing.
   //var splitPathRe =
   //    /^(\/?|)([\s\S]*?)((?:\.{1,2}|[^\/]+?|)(\.[^.\/]*|))(?:[\/]*)$/;
-  var splitPathRe = new RegExp("^("+SEP.PATH_SEP+"?|)([\\s\\S]*?)((?:\\.{1,2}|[^"+SEP.PATH_SEP+"]+?|)(\.[^."+SEP.PATH_SEP+"]*|))(?:["+SEP.PATH_SEP+"]*)$");
+  //    /^(\\/?|)([\\s\\S]*?)((?:\\.{1,2}|[^\\/]+?|)(\\.[^.\\/]*|))(?:[\\/]*)$/
+  var splitPathRe = new RegExp("^(\\"+SEP.PATH_SEP+"?|)([\\s\\S]*?)((?:\\.{1,2}|[^\\"+SEP.PATH_SEP+"]+?|)(\\.[^.\\"+SEP.PATH_SEP+"]*|))(?:[\\"+SEP.PATH_SEP+"]*)$");
   var splitPath = function(filename) {
     return splitPathRe.exec(filename).slice(1);
   };
