@@ -79,6 +79,9 @@ you cannot run level-subkey on a database you created with level-sublevel
 
 ## todo
 
++ Inherited Subkey Object to be extended.
+  + parent property
+  * separate private field and attributes
 + index the integer and json object key on some subkey.
   * mechanism:1
     + customize precodec in subkey()'s options
@@ -97,7 +100,7 @@ you cannot run level-subkey on a database you created with level-sublevel
 
 ## Main Concepts
 
-The key is always string only.
+The key is always string only unless it's an index.
 
 * Key Path
 * Key
