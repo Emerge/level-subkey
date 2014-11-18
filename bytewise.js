@@ -21,7 +21,7 @@ module.exports = function (db, opts) {
     }
   }, opts)
 
-  return shell ( nut ( db, precodec, codec ), [], ReadStream, opts)
+  return shell (nut(db, precodec, codec), ReadStream)([], opts)
 
 }
 

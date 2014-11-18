@@ -11,7 +11,7 @@ module.exports = function (db, opts) {
 
   opts = merge(db.options, opts)
 
-  return shell ( nut ( db, precodec, codec ), [], ReadStream, db.options)
+  return shell(nut(db, precodec, codec), ReadStream)([], db.options)
 
 }
 

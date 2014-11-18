@@ -23,7 +23,7 @@ var pullReadStream = require('../pull')
 function create (precodec, db) {
 
   //convert pull stream to iterators
-  return shell ( nut ( db || mock(), precodec, codec ), [], pullReadStream)
+  return shell ( nut ( db || mock(), precodec, codec ), pullReadStream)([])
 }
 
 function prehookPut (db) {
@@ -182,12 +182,11 @@ function stream (db) {
 
 
 var tests = [
-/*
+
   prehookPut,
   prehookBatch,
   createPostHooks,
   rmHook,
-  */
   stream
 ]
 

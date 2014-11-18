@@ -10,5 +10,6 @@ var ReadStream = require('levelup/lib/read-stream')
 
 module.exports = function (db, opts) {
   opts = merge(db.options, opts)
-  return shell ( nut ( db, precodec, codec ), [], ReadStream, opts)
+  var subkey = shell(nut(db, precodec, codec), ReadStream)
+  return subkey([], opts)
 }

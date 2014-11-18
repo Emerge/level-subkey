@@ -64,7 +64,7 @@
 
   version = require("./package.json").version;
 
-  sublevel = module.exports = function(nut, prefix, createStream, aOptions) {
+  sublevel = module.exports = function(nut, createStream) {
     var Subkey;
     createStream = createStream || function(e) {
       return e;
@@ -441,7 +441,7 @@
       return Subkey;
 
     })();
-    return new Subkey(prefix, aOptions);
+    return Subkey;
   };
 
 }).call(this);

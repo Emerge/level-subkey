@@ -37,8 +37,8 @@ inherits        = util.inherits
 version = require("./package.json").version
 
 
-sublevel = module.exports = (nut, prefix, createStream, aOptions) ->
-  createStream = createStream or (e) -> e
+sublevel = module.exports = (nut, aCreateReadStream) ->
+  aCreateReadStream = aCreateReadStream or (e) -> e
   class Subkey
     inherits(Subkey, EventEmitter)
     version: version
@@ -222,7 +222,7 @@ sublevel = module.exports = (nut, prefix, createStream, aOptions) ->
       #the opts.path could be relative
       opts.path = getPathArray(opts.path, @_pathArray) or @_pathArray
       isFilterExists = isFunction(opts.filter)
-      stream = createStream(opts, nut.createDecoder(opts))
+      stream = aCreateReadStream(opts, nut.createDecoder(opts))
       it = nut.iterator(opts, (err, it) ->
         stream.setIterator it
         it.stream = stream
@@ -280,5 +280,5 @@ sublevel = module.exports = (nut, prefix, createStream, aOptions) ->
       @readStream opts
     createPathStream: Subkey.prototype.pathStream
 
-  new Subkey(prefix, aOptions)
+  Subkey
 
