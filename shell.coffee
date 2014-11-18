@@ -7,6 +7,7 @@ precodec      = require("./codec")
 _nut          = require("./nut")
 errors        = require("levelup/lib/errors")
 WriteStream   = require("levelup/lib/write-stream")
+ReadStream    = require('levelup/lib/read-stream')
 
 setImmediate  = global.setImmediate or process.nextTick
 
@@ -37,8 +38,9 @@ inherits        = util.inherits
 version = require("./package.json").version
 
 
-sublevel = module.exports = (nut, aCreateReadStream) ->
-  aCreateReadStream = aCreateReadStream or (e) -> e
+sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteStream = WriteStream) ->
+  #aCreateReadStream = aCreateReadStream or ReadStream
+  #aCreateWriteStream = aCreateWriteStream or WriteStream
   class Subkey
     inherits(Subkey, EventEmitter)
     version: version
@@ -269,7 +271,7 @@ sublevel = module.exports = (nut, aCreateReadStream) ->
 
     writeStream: (opts) ->
       opts = @mergeOpts(opts)
-      new WriteStream(opts, @)
+      new aCreateWriteStream(opts, @)
     createWriteStream: Subkey.prototype.writeStream
 
     pathStream: (opts) ->
