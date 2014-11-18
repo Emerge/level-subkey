@@ -158,6 +158,13 @@ exports = module.exports = function (db, precodec, codec) {
     once: function() {
         if (db.once) db.once.apply(db, arguments)
     },
+    removeListener: function() {
+        if (db.removeListener) db.removeListener.apply(db, arguments)
+    },
+    subkey: function(aPath) {
+      aPath = path.resolve(aPath)
+      return _subkeys[aPath]
+    },
     subkeys: function(aKeyPattern) {
         var result = {}
         if (aKeyPattern) {
