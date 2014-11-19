@@ -109,10 +109,12 @@
       };
 
       function Subkey(aKeyPath, options) {
-        var parent;
+        var parent, vKeyPath, vSubkey;
         this.options = options;
         if (!(this instanceof Subkey)) {
-          return new Subkey(aKeyPath, options);
+          vKeyPath = path.normalizeArray(getPathArray(aKeyPath));
+          vSubkey = nut.createSubkey(vKeyPath, Subkey.bind(null, vKeyPath, this.options));
+          return vSubkey;
         }
         if (!this.setPath(aKeyPath)) {
           this._pathArray = [];
@@ -205,7 +207,7 @@
         var result, vKeyPath;
         vKeyPath = path.resolveArray(this._pathArray, name);
         vKeyPath.shift(0, 1);
-        result = nut.createSubkey(vKeyPath, Subkey.bind(null, vKeyPath, this.mergeOpts(opts)));
+        result = Subkey(vKeyPath, this.mergeOpts(opts));
         return result;
       };
 

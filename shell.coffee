@@ -58,7 +58,9 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
         nut.removeListener event, listener
     constructor: (aKeyPath, @options)->
       if not (this instanceof Subkey)
-        return new Subkey(aKeyPath, options)
+        vKeyPath = path.normalizeArray getPathArray aKeyPath
+        vSubkey = nut.createSubkey(vKeyPath, Subkey.bind(null, vKeyPath, @options))
+        return vSubkey
 
       if not @setPath(aKeyPath)
         @_pathArray = []
@@ -115,7 +117,8 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
     subkey: (name, opts) ->
       vKeyPath = path.resolveArray(@_pathArray, name)
       vKeyPath.shift 0, 1
-      result = nut.createSubkey(vKeyPath, Subkey.bind(null, vKeyPath, @mergeOpts(opts)))
+      result = Subkey(vKeyPath, @mergeOpts(opts))
+      #result = nut.createSubkey(vKeyPath, Subkey.bind(null, vKeyPath, @mergeOpts(opts)))
       result
     sublevel: deprecate["function"]((name, opts) ->
         @subkey name, opts

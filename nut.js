@@ -181,7 +181,7 @@ exports = module.exports = function (db, precodec, codec) {
         if (result) {
             result['_reference']++
         } else {
-            result = aNewSubkeyProc()
+            result = new aNewSubkeyProc()
             result['_reference'] = 1
             _subkeys[vKeyPath] = result
 
