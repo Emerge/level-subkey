@@ -1,4 +1,4 @@
-var tape = require('tape')
+var test = require('tape')
 
 var util = require('../util')
 
@@ -20,7 +20,7 @@ function a1Method(){console.log("a1Method");}
 A1.prototype.a1Method = a1Method;
 A1.prototype.className = 'A1';
 
-tape('inherits and isInheritedFrom', function (t) {
+test('inherits and isInheritedFrom', function (t) {
   t.equal(util.inherits(A, Root), true);
   t.equal(util.inherits(A, Root), false);
 
@@ -42,7 +42,7 @@ tape('inherits and isInheritedFrom', function (t) {
 
 });
 
-tape('inheritsObject', function (t) {
+test('inheritsObject', function (t) {
   var C = function(){};
   C.prototype.className = "C";
   function cMethod(){console.log("cMethod");}
@@ -60,6 +60,24 @@ tape('inheritsObject', function (t) {
   t.equal(bProto.cMethod, cMethod);
   t.equal(bProto.constructor, C);
   t.equal(bProto, C.prototype);
+  t.end();
+});
+
+test('isEmpty', function (t) {
+  isEmpty = util.isEmpty;
+  t.ok(isEmpty(null));
+  t.ok(isEmpty(""));
+  t.ok(isEmpty({}));
+  t.ok(isEmpty([]));
+  (function () {
+    t.ok(isEmpty(arguments));
+  })();
+  t.notOk(isEmpty("hi"));
+  t.notOk(isEmpty({length:0}));
+  t.notOk(isEmpty([1]));
+  (function () {
+    t.notOk(isEmpty(arguments));
+  })(1);
   t.end();
 });
 
