@@ -54,6 +54,12 @@ tape('inheritsObject', function (t) {
   t.equal(bProto.cMethod, cMethod);
   t.equal(bProto.constructor, C);
   t.equal(C.super_, B);
+  var b1 = new B();
+  t.equal(util.inheritsObject(b1, C), true);
+  bProto = b1.__proto__;
+  t.equal(bProto.cMethod, cMethod);
+  t.equal(bProto.constructor, C);
+  t.equal(bProto, C.prototype);
   t.end();
 });
 

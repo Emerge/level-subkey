@@ -119,10 +119,9 @@ var util = module.exports = {
       var vOldProto = aObject.__proto__;
       var result = false;
       if ( vOldProto !== aClass.prototype) {
-        if (util.inherits(aClass, vOldProto.constructor)) {
-          aObject.__proto__ = aClass.prototype;
-          result = true;
-        }
+        util.inherits(aClass, vOldProto.constructor);
+        aObject.__proto__ = aClass.prototype;
+        result = true;
       }
       return result;
     }
