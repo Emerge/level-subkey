@@ -188,6 +188,9 @@ exports = module.exports = function (db, precodec, codec) {
         }
         return result
     },
+    delSubkey: function(aKeyPath) {
+      return delete _subkeys[aKeyPath]
+    },
     freeSubkey: function(aKeyPathArray) {
         var vKeyPath = pathArrayToPath(aKeyPathArray)
         var result = _subkeys[vKeyPath]

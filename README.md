@@ -76,6 +76,7 @@ you cannot run level-subkey on a database you created with level-sublevel
 * prehook 
   + when add a key in pre hook, the new triggerBefore/triggerAfter options can disable trigger the added key to prevent the endless loop.
   * join separator before precodec.encode on the operation, using prefix separator always if the key is string.
++ parent() function to Subkey
 
 ## todo
 
@@ -236,6 +237,8 @@ wsAnimal.end()
 
 //crazy usage:
 //the path will always be absolute key path.
+//Warning: setPath will be broken the subkeys cache on nut!!
+//  if setPath it will remove itself from cache.
 animal.setPath("/stuff/plant")
 animal.setPath(plant)
 //now the "animal" is plant in fact.

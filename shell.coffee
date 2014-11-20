@@ -1,9 +1,9 @@
+precodec      = require("./codec")
 util          = require("./util")
 path          = require("./path")
 through       = require("through")
 EventEmitter  = require("events").EventEmitter
 addpre        = require("./range").addPrefix
-precodec      = require("./codec")
 _nut          = require("./nut")
 errors        = require("levelup/lib/errors")
 WriteStream   = require("levelup/lib/write-stream")
@@ -77,10 +77,17 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
         result
       # end __defineGetter__ "sublevels"
       @init()
+    parent: ()->
+      result = nut.subkey(path.dirname @path())
+      return result
     setPath: (aPath) ->
       aPath = getPathArray(aPath)
       if aPath
-        @_pathArray = path.normalizeArray(aPath)
+        aPath = path.normalizeArray(aPath)
+        vPath = @path() if @_pathArray?
+        if vPath? and vPath isnt path.resolve(aPath)
+          nut.delSubkey(vPath)
+        @_pathArray = aPath
         true
       else
         false

@@ -1,12 +1,15 @@
 
 //define the key ordering for level-sublevel
 
+var path = require('../path')
+//this is for path.js:
+var SEP = require('./separator')
+
 //special key seperators
-var SUBKEY_SEPS = ['/.!', '#*&']
-var UNSAFE_CHARS =  SUBKEY_SEPS[0] + SUBKEY_SEPS[1] + '%'
+var SUBKEY_SEPS = SEP.SUBKEY_SEPS
+var UNSAFE_CHARS =  SEP.UNSAFE_CHARS
 var PATH_SEP = SUBKEY_SEPS[0][0], SUBKEY_SEP = SUBKEY_SEPS[1][0]
 
-var path = require('../path')
 
 function isString(s) {
   return "string" === typeof s
@@ -15,7 +18,6 @@ function isString(s) {
 exports.__defineGetter__("PATH_SEP", function() {
   return PATH_SEP
 })
-
 exports.__defineGetter__("SUBKEY_SEP", function() {
   return SUBKEY_SEP
 })
@@ -23,14 +25,12 @@ exports.__defineGetter__("SUBKEY_SEP", function() {
 exports.__defineGetter__("SUBKEY_SEPS", function() {
   return SUBKEY_SEPS
 })
-
 exports.__defineSetter__("SUBKEY_SEPS", function(value) {
-    if (Array.isArray(value) && value.length>=2 && isString(value[0]) && isString(value[1]) && value[0].length>0 && value[0].length===value[1].length) {
-      SUBKEY_SEPS  = value
-      PATH_SEP     = SUBKEY_SEPS[0][0]
-      SUBKEY_SEP   = SUBKEY_SEPS[1][0]
-      UNSAFE_CHARS = SUBKEY_SEPS[0] + SUBKEY_SEPS[1] + '%'
-    }
+  SEP.SUBKEY_SEPS = value
+  SUBKEY_SEPS = SEP.SUBKEY_SEPS
+  UNSAFE_CHARS =  SEP.UNSAFE_CHARS
+  PATH_SEP = SUBKEY_SEPS[0][0]
+  SUBKEY_SEP = SUBKEY_SEPS[1][0]
 })
 
 escapeString = exports.escapeString = function(aString, aUnSafeChars) {

@@ -2,6 +2,8 @@
 (function() {
   var EventEmitter, FILTER_EXCLUDED, FILTER_INCLUDED, FILTER_STOPPED, PATH_SEP, ReadStream, SUBKEY_SEP, WriteStream, addpre, assignDeprecatedPrefixOption, deprecate, errors, getPathArray, inherits, isFunction, isObject, isString, path, pathArrayToPath, precodec, resolveKeyPath, setImmediate, sublevel, through, util, version, _nut;
 
+  precodec = require("./codec");
+
   util = require("./util");
 
   path = require("./path");
@@ -11,8 +13,6 @@
   EventEmitter = require("events").EventEmitter;
 
   addpre = require("./range").addPrefix;
-
-  precodec = require("./codec");
 
   _nut = require("./nut");
 
@@ -109,7 +109,7 @@
       };
 
       function Subkey(aKeyPath, options) {
-        var parent, vKeyPath, vSubkey;
+        var vKeyPath, vSubkey;
         this.options = options;
         if (!(this instanceof Subkey)) {
           vKeyPath = path.normalizeArray(getPathArray(aKeyPath));
@@ -120,7 +120,6 @@
           this._pathArray = [];
         }
         this.self = this;
-        parent = nut.subkey(path.dirname(this.path));
         this.__defineGetter__("sublevels", function() {
           var k, r, result;
           deprecate("sublevels, all subkeys(sublevels) have cached on nut now.");
@@ -134,10 +133,27 @@
         this.init();
       }
 
+      Subkey.prototype.parent = function() {
+        var p, result;
+        console.log("sssssssssss");
+        p = this.path();
+        console.log(p, " parent=", path.dirname(p));
+        result = nut.subkey(path.dirname(this.path()));
+        return result;
+      };
+
       Subkey.prototype.setPath = function(aPath) {
+        var vPath;
         aPath = getPathArray(aPath);
         if (aPath) {
-          this._pathArray = path.normalizeArray(aPath);
+          aPath = path.normalizeArray(aPath);
+          if (this._pathArray != null) {
+            vPath = this.path();
+          }
+          if ((vPath != null) && vPath !== path.resolve(aPath)) {
+            nut.delSubkey(vPath);
+          }
+          this._pathArray = aPath;
           return true;
         } else {
           return false;

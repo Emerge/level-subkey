@@ -1,7 +1,7 @@
 var tape = require('tape')
-var PATH_SEP = require('../codec').PATH_SEP
-var SUBKEY_SEP = require('../codec').SUBKEY_SEP
-var SUBKEY_SEPS = require('../codec').SUBKEY_SEPS
+var PATH_SEP = require('../codec/separator').PATH_SEP
+var SUBKEY_SEP = require('../codec/separator').SUBKEY_SEP
+var SUBKEY_SEPS = require('../codec/separator').SUBKEY_SEPS
 
 var expected = [
   [[], 'foo'],
