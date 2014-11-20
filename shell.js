@@ -135,10 +135,12 @@
 
       Subkey.prototype.parent = function() {
         var p, result;
-        console.log("sssssssssss");
-        p = this.path();
-        console.log(p, " parent=", path.dirname(p));
-        result = nut.subkey(path.dirname(this.path()));
+        p = path.dirname(this.path());
+        result = nut.subkey(p);
+        while ((result == null) && p !== PATH_SEP) {
+          p = path.dirname(p);
+          result = nut.subkey(p);
+        }
         return result;
       };
 

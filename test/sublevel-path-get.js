@@ -108,12 +108,14 @@ test('sublevel-path-parent', function (t) {
   var bar = base.subkey('bar')
   var foo = base.subkey('foo')
   var barA = bar.subkey('Axq')
-  var fooA1 = base.subkey('/foo/a3F2e/1')
+  var fooA1 = base.subkey('/foo/a/a3F2e/1')
  
   t.equal(bar.path(), '/bar')
   t.equal(bar.parent(), base, "bar's parent is root")
   t.equal(barA.parent(), bar, "barA's parent is bar")
-  t.equal(fooA1.parent(), undefined)
+  t.equal(fooA1.parent(), foo)
+  var fooa= base.subkey('/foo/a')
+  t.equal(fooA1.parent(), fooa)
   t.end()
 })
 

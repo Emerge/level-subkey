@@ -78,7 +78,12 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
       # end __defineGetter__ "sublevels"
       @init()
     parent: ()->
-      result = nut.subkey(path.dirname @path())
+      p = path.dirname @path()
+      result = nut.subkey(p)
+      #get latest parent
+      while not result? and p != PATH_SEP
+        p = path.dirname p
+        result = nut.subkey(p)
       return result
     setPath: (aPath) ->
       aPath = getPathArray(aPath)
