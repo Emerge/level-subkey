@@ -65,7 +65,7 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
       if not @setPath(aKeyPath)
         @_pathArray = []
       @self = @
-      parent = nut.subkey(path.dirname @path)
+      #parent = nut.subkey(path.dirname @path)
       #if parent?
 
       @__defineGetter__ "sublevels", ->
