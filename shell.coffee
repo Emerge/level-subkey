@@ -208,6 +208,13 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
       if isFunction opts
         cb = opts
         opts = {}
+      if isObject key
+        opts = key
+        key = "."
+      else if isFunction key
+        cb = key
+        opts = {}
+        key = "."
       assignDeprecatedPrefixOption opts
       vPath = if isString(opts.path) then getPathArray(opts.path) else @_pathArray
       opts.path = getPathArray(opts.path)  if opts.path
@@ -218,6 +225,14 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
         else
           cb.call that, null, value
     alias: (aKeyPath, aAlias, aCallback) ->
+      if isFunction aAlias
+        aCallback = aAlias
+        aAlias = aKeyPath
+        aKeyPath = @path()
+      aKeyPath = aKeyPath.path() if isFunction aKeyPath.path
+      aAlias = aAlias.path() if isFunction aAlias.path
+      @_alias(aKeyPath, aAlias, aCallback)
+    _alias: (aKeyPath, aAlias, aCallback) ->
       @_doOperation({key:aAlias, value:aKeyPath, type: "put"}, {valueEncoding: 'utf8'}, aCallback)
     pre: (key, hook) ->
       unhook = @_addHook(key, hook, nut.pre)

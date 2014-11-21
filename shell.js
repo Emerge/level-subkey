@@ -351,6 +351,14 @@
           cb = opts;
           opts = {};
         }
+        if (isObject(key)) {
+          opts = key;
+          key = ".";
+        } else if (isFunction(key)) {
+          cb = key;
+          opts = {};
+          key = ".";
+        }
         assignDeprecatedPrefixOption(opts);
         vPath = isString(opts.path) ? getPathArray(opts.path) : this._pathArray;
         if (opts.path) {
@@ -367,6 +375,21 @@
       };
 
       Subkey.prototype.alias = function(aKeyPath, aAlias, aCallback) {
+        if (isFunction(aAlias)) {
+          aCallback = aAlias;
+          aAlias = aKeyPath;
+          aKeyPath = this.path();
+        }
+        if (isFunction(aKeyPath.path)) {
+          aKeyPath = aKeyPath.path();
+        }
+        if (isFunction(aAlias.path)) {
+          aAlias = aAlias.path();
+        }
+        return this._alias(aKeyPath, aAlias, aCallback);
+      };
+
+      Subkey.prototype._alias = function(aKeyPath, aAlias, aCallback) {
         return this._doOperation({
           key: aAlias,
           value: aKeyPath,

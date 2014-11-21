@@ -95,12 +95,14 @@ you cannot run level-subkey on a database you created with level-sublevel
   + forceCreate: boolean, default is false, whether create a new subkey always instead of retreiving from cache.
 + destroy event on Subkey
   * it will be trigger when subkey.free()
-+ alias(aKeyPath, alias)
++ alias(keyPath, alias, callback)
   * set an alias to aKeyPath
   * if db has alias method then use it, or use the K/V one.
   * the K/V alias' value getter:
     * the value encoding should be JSON and value starts with "/" means it's a alias
     * not very perfect, but it works now.
+  + or alias(alias, callback)
++ subkey.get([options], callback) to get itself value.
 
 ## todo
 

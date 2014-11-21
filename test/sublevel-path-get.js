@@ -19,6 +19,7 @@ test('sublevel-path-get', function (t) {
 
 
   base.batch([
+    { key: 'bar', value: "HiBar", type: 'put', valueEncoding: 'json'},
     { key: 'a', value: 1, type: 'put', path: ['foo'] },
     { key: 'k', value: 2, type: 'put', path: '/foo' },
     { key: 'q', value: 3, type: 'put', path: "foo/a" },
@@ -130,6 +131,63 @@ test('sublevel-get-alias', function (t) {
       t.strictEqual(v, 3)
       t.end()
     })
+  })
+})
+test('sublevel-get-alias2', function (t) {
+  var bar = base.subkey('bar')
+  var foo = base.subkey('foo')
+ 
+  bar.alias("/foo/bar", function(err) {
+    if (err) throw(err)
+    foo.get("bar", {valueEncoding: 'json'},function(err, v){
+      if (err) throw(err)
+      t.strictEqual(v, "HiBar")
+      t.end()
+    })
+  })
+})
+test('sublevel-get-alias3', function (t) {
+  var bar = base.subkey('bar')
+  var foo = base.subkey('foo')
+  var fooBar2 = base.subkey('foo/bar2')
+ 
+  bar.alias(fooBar2, function(err) {
+    if (err) throw(err)
+    foo.get("bar2", {valueEncoding: 'json'},function(err, v){
+      if (err) throw(err)
+      t.strictEqual(v, "HiBar")
+      t.end()
+    })
+  })
+})
+test('sublevel-get-alias4', function (t) {
+  var bar = base.subkey('bar')
+  var foo = base.subkey('foo')
+  var fooBar3 = base.subkey('foo/bar3')
+ 
+  base.alias(bar, fooBar3, function(err) {
+    if (err) throw(err)
+    foo.get("bar3", {valueEncoding: 'json'},function(err, v){
+      if (err) throw(err)
+      t.strictEqual(v, "HiBar")
+      t.end()
+    })
+  })
+})
+test('sublevel-path-get-self', function (t) {
+  var bar = base.subkey('bar')
+  bar.get({valueEncoding: 'json'}, function(err, v){
+    if (err) throw(err)
+    t.equal(v, 'HiBar')
+    t.end()
+  })
+})
+test('sublevel-path-get-self2', function (t) {
+  var bar = base.subkey('bar')
+  bar.get(function(err, v){
+    if (err) throw(err)
+    t.equal(v, '"HiBar"')
+    t.end()
   })
 })
 
