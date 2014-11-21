@@ -1,3 +1,4 @@
+var path = require('../path')
 var levelup = require('level-test')()
 
 var base = require('../')(levelup('test-sublevels'))
@@ -28,27 +29,31 @@ test('subsections', function (t) {
   t.end()
 })
 
-test('sublevels-hooks-free', function (t) {
+test.only('sublevels-hooks-free', function (t) {
   var bar = base.subkey('newBar')
   var barLess = bar.subkey('Less')
   var barMore = bar.subkey('more')
 
   var bm = bar.subkey('more'), bl = bar.subkey('Less')
   var bbm = base.subkey('newBar/more'), bbl = base.subkey('newBar/Less')
-  t.equal(barLess._reference, 3)
-  t.equal(barMore._reference, 3)
+  var barb = base.subkey('newBar', {addRef: false})
+  t.equal(bar.RefCount, 0)
+  t.strictEqual(bar, barb)
+
+  t.equal(barLess.RefCount, 2)
+  t.equal(barMore.RefCount, 2)
   t.strictEqual(bm, barMore)
   t.strictEqual(bl, barLess)
   t.strictEqual(bbm, barMore)
   t.strictEqual(bbl, barLess)
-  bm.close()
-  bl.close()
-  t.equal(barLess._reference, 2)
-  t.equal(barMore._reference, 2)
-  bbm.close()
-  bbl.close()
-  t.equal(barLess._reference, 1)
-  t.equal(barMore._reference, 1)
+  bm.free()
+  bl.free()
+  t.equal(barLess.RefCount, 1)
+  t.equal(barMore.RefCount, 1)
+  bbm.free()
+  bbl.free()
+  t.equal(barLess.RefCount, 0)
+  t.equal(barMore.RefCount, 0)
 
   bar.pre(function(){})
   bar.post(function(){})
@@ -60,13 +65,21 @@ test('sublevels-hooks-free', function (t) {
   t.strictEqual(bar.unhooks.length, 2)
   t.strictEqual(barLess.unhooks.length, 2)
   t.strictEqual(barMore.unhooks.length, 2)
-  base.close()
-  t.equal(bar._reference, 0)
-  t.equal(barLess._reference, 0)
-  t.equal(barMore._reference, 0)
+  var expected = {}
+  //expected[bar.path()] = bar
+  expected[barLess.path()] = barLess
+  expected[barMore.path()] = barMore
+  t.deepEqual(base._NUT.subkeys(path.join(bar.pathAsArray(), "*")), expected)
+  t.deepEqual(base._NUT.subkeys()[bar.path()], bar)
+  base.free()
+  t.equal(bar.RefCount, -1)
+  t.equal(barLess.RefCount, -1)
+  t.equal(barMore.RefCount, -1)
   t.strictEqual(bar.unhooks.length, 0)
   t.strictEqual(barLess.unhooks.length, 0)
   t.strictEqual(barMore.unhooks.length, 0)
+  t.deepEqual(base._NUT.subkeys(path.join(bar.pathAsArray(), "*")), {})
+  t.strictEqual(base._NUT.subkeys()[bar.path()], undefined)
   t.end()
 })
 
@@ -79,6 +92,12 @@ test('sublevels-create-subkey-with-anyPath', function (t) {
   var fooEggBig = foo.subkey('egg/big')
   t.deepEqual(fooEggBig.pathAsArray(), ['foo', 'egg', 'big'])
   t.deepEqual(bar.subkey('/abs/23/中央').pathAsArray(), ['abs', '23', '中央'])
+  t.equal(base.name, '/')
+  t.equal(base.fullName, '/')
+  t.equal(base.path(), base.fullName)
+  t.equal(fooEggBig.name, 'big')
+  t.equal(fooEggBig.fullName, '/foo/egg/big')
+  t.equal(fooEggBig.path(), fooEggBig.fullName)
   t.end()
 })
 

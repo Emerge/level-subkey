@@ -35,7 +35,7 @@ you cannot run level-subkey on a database you created with level-sublevel
 + minimatch supports for hook and search.
 * the subkey must be escaped the PATH\_SEP by youself.
 * the hooks match key use wildchar(see minimatch) now.
-* remove the sublevels attributes and just cache all subkey objects into nut. no memory leak any more after close().
+* remove the sublevels attributes and just cache all subkey objects into nut. no memory leak any more after free().
   + add the sublevels property getter and setter to keep compatibility.
 + can filter in the stream.
   * options.filter = function(key, value) return
@@ -53,15 +53,15 @@ you cannot run level-subkey on a database you created with level-sublevel
 
         var precodec = require('sublevel/codec')
         precodec.SUBKEY_SEPS = ["/|-", "#.+"] //the first char is the default subkey separator, others are customize separator. 
-        sublevel.put("some", "value", {separator: '|'})
+        subkey.put("some", "value", {separator: '|'})
         //list all key/value on separator "|"
-        sublevel.createReadStream({separator: '.'})
+        subkey.createReadStream({separator: '.'})
         //it will return all prefixed "|" keys: {key: "|abc", value:....}
 + createWriteStream supports
   * Note: the writeStream do not support the options.path, options.separator parameters.
 * [bug] fixed the hooks may be memory leak when free sublevel.
   * https://github.com/dominictarr/level-sublevel/issues/38
-  * sublevel.close will deregister hooks now.
+  * subkey.free() will deregister hooks and free all subkeys of itself.
 * readStream
   + bounded(boolean, default is true) option to options: whether limit the boundary of the data.
   + separatorRaw(boolean, default: false): do not convert the separator, use this separator directly if true.
@@ -77,12 +77,27 @@ you cannot run level-subkey on a database you created with level-sublevel
   + when add a key in pre hook, the new triggerBefore/triggerAfter options can disable trigger the added key to prevent the endless loop.
   * join separator before precodec.encode on the operation, using prefix separator always if the key is string.
 + parent() function to Subkey
+  * get the latest parent of the subkey.
++ free() function to Subkey
+  * free the hooks on the subkey
+  * free all the subkeys of itself(freeSubkeys).
++ name/fullName attributes to Subkey
+  * the name means the path.basename(fullName)
+  * the full name means the key path. fullName = path()
+* Subkey is inherited from InterfacedObject now
++ init/final methods on Subkey
+  * these are always called on constructor/destroy.
+* setPath() would change instance to another subkey.
+  * it would not be cached on nut if setPath(): remove it from nut first.
+  * it will try destroy first, then re-init again.
+* sublevel.subkey(aKeyName, options)
+  + addRef: boolean, default is true, whether addRef() if cached.
+  + forceCreate: boolean, default is false, whether create a new subkey always instead of retreiving from cache.
++ destroy event on Subkey
+  * it will be trigger when subkey.free()
 
 ## todo
 
-+ Inherited Subkey Object to be extended.
-  + parent property
-  * separate private field and attributes
 + index the integer and json object key on some subkey.
   * mechanism:1
     + customize precodec in subkey()'s options

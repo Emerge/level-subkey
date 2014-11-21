@@ -175,16 +175,20 @@ exports = module.exports = function (db, precodec, codec) {
             result = _subkeys
         return result
     },
-    createSubkey: function(aKeyPathArray, aNewSubkeyProc) {
+    createSubkey: function(aKeyPathArray, aNewSubkeyProc, options) {
         var vKeyPath = pathArrayToPath(aKeyPathArray)
+        if (options && options.forceCreate === true) {
+          return new aNewSubkeyProc(options)
+        }
         var result = _subkeys[vKeyPath]
         if (result) {
-            result['_reference']++
+            if (options && options.addRef !== false) result.addRef()
         } else {
-            result = new aNewSubkeyProc()
-            result['_reference'] = 1
+            result = new aNewSubkeyProc(options)
             _subkeys[vKeyPath] = result
-
+            result.on("destroy", function(item){
+              delete _subkeys[vKeyPath]
+            })
         }
         return result
     },
@@ -195,13 +199,9 @@ exports = module.exports = function (db, precodec, codec) {
         var vKeyPath = pathArrayToPath(aKeyPathArray)
         var result = _subkeys[vKeyPath]
         if (result) {
-            var vReference = --result['_reference']
-            if (vReference <= 0)
-                return delete _subkeys[vKeyPath]
-            else
-                return vReference
+          return result.free()
         } else
-            return false
+          return false
     },
     apply: function (ops, opts, cb) {
       function prepareKeyPath(aOperation) {

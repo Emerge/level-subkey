@@ -2,12 +2,12 @@ precodec      = require("./codec")
 util          = require("./util")
 path          = require("./path")
 through       = require("through")
-EventEmitter  = require("events").EventEmitter
 addpre        = require("./range").addPrefix
 _nut          = require("./nut")
 errors        = require("levelup/lib/errors")
 WriteStream   = require("levelup/lib/write-stream")
 ReadStream    = require('levelup/lib/read-stream')
+InterfacedObject = require("./InterfacedObject")
 
 setImmediate  = global.setImmediate or process.nextTick
 
@@ -39,10 +39,9 @@ version = require("./package.json").version
 
 
 sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteStream = WriteStream) ->
-  #aCreateReadStream = aCreateReadStream or ReadStream
-  #aCreateWriteStream = aCreateWriteStream or WriteStream
   class Subkey
-    inherits(Subkey, EventEmitter)
+    inherits(Subkey, InterfacedObject)
+    _NUT: nut
     version: version
     init: ->
       @methods = {}
@@ -53,20 +52,29 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
         closed: @emit.bind(@, "closed")
       for event, listener of @listeners
         nut.on event, listener 
-    fininal: ->
+    final: ->
+      #deregister all hooks
+      unhooks = @unhooks
+      i = 0
+
+      while i < unhooks.length
+        unhooks[i]()
+        i++
+      @unhooks = []
       for event, listener of @listeners
         nut.removeListener event, listener
+      @freeSubkeys()
     constructor: (aKeyPath, @options)->
       if not (this instanceof Subkey)
         vKeyPath = path.normalizeArray getPathArray aKeyPath
-        vSubkey = nut.createSubkey(vKeyPath, Subkey.bind(null, vKeyPath, @options))
+        vSubkey = nut.createSubkey(vKeyPath, Subkey.bind(null, vKeyPath), options)
         return vSubkey
 
-      if not @setPath(aKeyPath)
-        @_pathArray = []
+      super()
+      aKeyPath = getPathArray(aKeyPath)
+      aKeyPath = if aKeyPath then path.normalizeArray(aKeyPath) else []
+      @_pathArray = aKeyPath
       @self = @
-      #parent = nut.subkey(path.dirname @path)
-      #if parent?
 
       @__defineGetter__ "sublevels", ->
         deprecate "sublevels, all subkeys(sublevels) have cached on nut now."
@@ -76,6 +84,13 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
           result[path.basename(k)] = r[k]
         result
       # end __defineGetter__ "sublevels"
+      @__defineGetter__ "name", ->
+        l = @_pathArray.length
+        if l > 0 then @_pathArray[l-1] else PATH_SEP
+      # end __defineGetter__ "name"
+      @__defineGetter__ "fullName", ->
+        PATH_SEP + @_pathArray.join(PATH_SEP)
+      # end __defineGetter__ "fullName"
       @init()
     parent: ()->
       p = path.dirname @path()
@@ -92,10 +107,11 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
         vPath = @path() if @_pathArray?
         if vPath? and vPath isnt path.resolve(aPath)
           nut.delSubkey(vPath)
-        @_pathArray = aPath
-        true
-      else
-        false
+          @final()
+          @_pathArray = aPath
+          @init()
+          return true
+      false
     _addHook: (key, callback, hooksAdd) ->
       return hooksAdd([@_pathArray], key)  if isFunction(key)
       return hooksAdd(resolveKeyPath(@_pathArray, key), callback)  if isString(key)
@@ -123,42 +139,29 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
       , "prefix(), use `pathAsArray()` instead, or use path() to return string path..")
     path: (aPath, aOptions) ->
       if aPath is `undefined`
-        PATH_SEP + @_pathArray.join(PATH_SEP)
+        @fullName
       else
         @subkey aPath, aOptions
     subkey: (name, opts) ->
       vKeyPath = path.resolveArray(@_pathArray, name)
       vKeyPath.shift 0, 1
-      result = Subkey(vKeyPath, @mergeOpts(opts))
-      #result = nut.createSubkey(vKeyPath, Subkey.bind(null, vKeyPath, @mergeOpts(opts)))
-      result
+      return Subkey(vKeyPath, @mergeOpts(opts))
     sublevel: deprecate["function"]((name, opts) ->
         @subkey name, opts
       , "sublevel(), use `subkey(name)` or `path(name)` instead.")
  
-    closeSubkeys: (aKeyPattern) ->
+    freeSubkeys: (aKeyPattern) ->
       unless aKeyPattern
         aKeyPattern = path.join(@_pathArray, "*")
       else
         aKeyPattern = path.resolve(@_pathArray, aKeyPattern)
       vSubkeys = nut.subkeys(aKeyPattern)
       for k of vSubkeys
-        vSubkeys[k].close()
+        vSubkeys[k].free()
       return
-    close: (cb) ->
-      #deregister all hooks
-      unhooks = @unhooks
-      i = 0
-
-      while i < unhooks.length
-        unhooks[i]()
-        i++
-      @unhooks = []
-      @closeSubkeys()
-      nut.freeSubkey @_pathArray
-      
-      #nut.close(cb)
-      setImmediate cb  if isFunction(cb)
+    destroy: ->
+      super
+      @final()
     _doOperation: (aOperation, opts, cb) ->
       if isFunction opts
         cb = opts
