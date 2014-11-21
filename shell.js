@@ -139,6 +139,18 @@
           }
           return result;
         });
+        this.__defineGetter__("name", function() {
+          var l;
+          l = this._pathArray.length;
+          if (l > 0) {
+            return this._pathArray[l - 1];
+          } else {
+            return PATH_SEP;
+          }
+        });
+        this.__defineGetter__("fullName", function() {
+          return PATH_SEP + this._pathArray.join(PATH_SEP);
+        });
         this.init();
       }
 
@@ -225,18 +237,17 @@
 
       Subkey.prototype.path = function(aPath, aOptions) {
         if (aPath === undefined) {
-          return PATH_SEP + this._pathArray.join(PATH_SEP);
+          return this.fullName;
         } else {
           return this.subkey(aPath, aOptions);
         }
       };
 
       Subkey.prototype.subkey = function(name, opts) {
-        var result, vKeyPath;
+        var vKeyPath;
         vKeyPath = path.resolveArray(this._pathArray, name);
         vKeyPath.shift(0, 1);
-        result = Subkey(vKeyPath, this.mergeOpts(opts));
-        return result;
+        return Subkey(vKeyPath, this.mergeOpts(opts));
       };
 
       Subkey.prototype.sublevel = deprecate["function"](function(name, opts) {
@@ -353,6 +364,16 @@
             return cb.call(that, null, value);
           }
         });
+      };
+
+      Subkey.prototype.alias = function(aKeyPath, aAlias, aCallback) {
+        return this._doOperation({
+          key: aAlias,
+          value: aKeyPath,
+          type: "put"
+        }, {
+          valueEncoding: 'utf8'
+        }, aCallback);
       };
 
       Subkey.prototype.pre = function(key, hook) {

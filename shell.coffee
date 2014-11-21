@@ -217,6 +217,8 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
           cb.call that, new errors.NotFoundError("Key not found in database", err)
         else
           cb.call that, null, value
+    alias: (aKeyPath, aAlias, aCallback) ->
+      @_doOperation({key:aAlias, value:aKeyPath, type: "put"}, {valueEncoding: 'utf8'}, aCallback)
     pre: (key, hook) ->
       unhook = @_addHook(key, hook, nut.pre)
       @unhooks.push unhook

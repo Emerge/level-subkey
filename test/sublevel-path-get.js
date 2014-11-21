@@ -119,3 +119,17 @@ test('sublevel-path-parent', function (t) {
   t.end()
 })
 
+test('sublevel-get-alias', function (t) {
+  var bar = base.subkey('bar')
+  var foo = base.subkey('foo')
+ 
+  base.alias("/foo/a/q", "/bar/foo/alias/q", function(err) {
+    if (err) throw(err)
+    bar.get("foo/alias/q", {valueEncoding: 'json'},function(err, v){
+      if (err) throw(err)
+      t.strictEqual(v, 3)
+      t.end()
+    })
+  })
+})
+

@@ -289,7 +289,17 @@ exports = module.exports = function (db, precodec, codec) {
         opts,
         function (err, value) {
           if(err) cb(err)
-          else    cb(null, codec.decodeValue(value, opts || options))
+          else {
+            var vOpts = opts || options
+            if (vOpts.valueEncoding === "json" && value.length > 0 && value[0] === PATH_SEP) {
+              //process alias
+              (db.db||db).get(encodePath(resolveKeyPath([], value), opts), opts, function(err, value){
+                 if (err) cb(err)
+                 else     cb(null, codec.decodeValue(value, vOpts))
+              })
+            } else
+              cb(null, codec.decodeValue(value, vOpts))
+          }
         }
       )
     },
