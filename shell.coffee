@@ -64,13 +64,17 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
       for event, listener of @listeners
         nut.removeListener event, listener
       @freeSubkeys()
-    constructor: (aKeyPath, @options)->
+    constructor: (aKeyPath, aOptions, aCallback)->
+      if isFunction aOptions
+        aCallback = aOptions
+        aOptions = {}
       if not (this instanceof Subkey)
         vKeyPath = path.normalizeArray getPathArray aKeyPath
-        vSubkey = nut.createSubkey(vKeyPath, Subkey.bind(null, vKeyPath), options)
+        vSubkey = nut.createSubkey(vKeyPath, Subkey.bind(null, vKeyPath), aOptions, aCallback)
         return vSubkey
 
       super()
+      @options = aOptions
       aKeyPath = getPathArray(aKeyPath)
       aKeyPath = if aKeyPath then path.normalizeArray(aKeyPath) else []
       @_pathArray = aKeyPath

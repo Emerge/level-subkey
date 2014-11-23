@@ -175,20 +175,23 @@ exports = module.exports = function (db, precodec, codec) {
             result = _subkeys
         return result
     },
-    createSubkey: function(aKeyPathArray, aNewSubkeyProc, options) {
+    createSubkey: function(aKeyPathArray, aNewSubkeyProc, options, callback) {
         var vKeyPath = pathArrayToPath(aKeyPathArray)
+        var result;
         if (options && options.forceCreate === true) {
-          return new aNewSubkeyProc(options)
-        }
-        var result = _subkeys[vKeyPath]
-        if (result) {
-            if (options && options.addRef !== false) result.addRef()
+          result = new aNewSubkeyProc(options, callback)
         } else {
-            result = new aNewSubkeyProc(options)
-            _subkeys[vKeyPath] = result
-            result.on("destroy", function(item){
-              delete _subkeys[vKeyPath]
-            })
+          result = _subkeys[vKeyPath]
+          if (result) {
+              if (options && options.addRef !== false) result.addRef()
+              if (callback) callback(null, result)
+          } else {
+              result = new aNewSubkeyProc(options, callback)
+              _subkeys[vKeyPath] = result
+              result.on("destroy", function(item){
+                delete _subkeys[vKeyPath]
+              })
+          }
         }
         return result
     },
@@ -284,6 +287,31 @@ exports = module.exports = function (db, precodec, codec) {
     },
     get: function (key, path, opts, cb) {
       opts.asBuffer = codec.isValueAsBuffer(opts)
+      function getRedirect(aDb, aKey, aOptions) {
+        console.log(aOptions.allowRedirect, " redirect:", aKey)
+        var vNeedRedirect = aOptions.valueEncoding === "json" && aKey.length > 0 && aKey[0] === PATH_SEP
+        if (aOptions.allowRedirect > 0 && vNeedRedirect) {
+          aOptions.allowRedirect--
+          aDb.get(encodePath(resolveKeyPath([], aKey), aOptions), aOptions, function(err, value) {
+            if (err) cb(err)
+            else {
+              vNeedRedirect = getRedirect(aDb, value, aOptions)
+              switch (vNeedRedirect) {
+                case 1:
+                  cb(null, value)
+                  break
+                case 0:
+                  cb(null, codec.decodeValue(value, aOptions))
+                  break
+              } //switch(vNeedRedirect)
+            }
+          })
+          return 2
+        } else {
+          if (vNeedRedirect) return 1
+          else return 0
+        }
+      }
       return (db.db || db).get(
         encodePath(resolveKeyPath(path, key), opts),
         opts,
@@ -291,14 +319,15 @@ exports = module.exports = function (db, precodec, codec) {
           if(err) cb(err)
           else {
             var vOpts = opts || options
-            if (vOpts.valueEncoding === "json" && value.length > 0 && value[0] === PATH_SEP) {
-              //process alias
-              (db.db||db).get(encodePath(resolveKeyPath([], value), opts), opts, function(err, value){
-                 if (err) cb(err)
-                 else     cb(null, codec.decodeValue(value, vOpts))
-              })
-            } else
-              cb(null, codec.decodeValue(value, vOpts))
+            var vNeedRedirect = getRedirect((db.db || db), value, vOpts)
+            switch (vNeedRedirect) {
+              case 1:
+                cb(null, value)
+                break
+              case 0:
+                cb(null, codec.decodeValue(value, vOpts))
+                break
+            }
           }
         }
       )

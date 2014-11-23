@@ -99,9 +99,10 @@ you cannot run level-subkey on a database you created with level-sublevel
   * set an alias to aKeyPath
   * if db has alias method then use it, or use the K/V one.
   * the K/V alias' value getter:
+    * the opts.allowRedirect > 0
     * the value encoding should be JSON and value starts with "/" means it's a alias
-    * not very perfect, but it works now.
-  + or alias(alias, callback)
+    * return the alias key string if disallow redirect.
+  + alias(alias, callback): create a alias for this subkey.
 + subkey.get([options], callback) to get itself value.
 
 ## todo

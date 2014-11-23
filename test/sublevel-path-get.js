@@ -126,7 +126,7 @@ test('sublevel-get-alias', function (t) {
  
   base.alias("/foo/a/q", "/bar/foo/alias/q", function(err) {
     if (err) throw(err)
-    bar.get("foo/alias/q", {valueEncoding: 'json'},function(err, v){
+    bar.get("foo/alias/q", {valueEncoding: 'json', allowRedirect:1},function(err, v){
       if (err) throw(err)
       t.strictEqual(v, 3)
       t.end()
@@ -139,7 +139,7 @@ test('sublevel-get-alias2', function (t) {
  
   bar.alias("/foo/bar", function(err) {
     if (err) throw(err)
-    foo.get("bar", {valueEncoding: 'json'},function(err, v){
+    foo.get("bar", {valueEncoding: 'json', allowRedirect:1},function(err, v){
       if (err) throw(err)
       t.strictEqual(v, "HiBar")
       t.end()
@@ -153,7 +153,7 @@ test('sublevel-get-alias3', function (t) {
  
   bar.alias(fooBar2, function(err) {
     if (err) throw(err)
-    foo.get("bar2", {valueEncoding: 'json'},function(err, v){
+    foo.get("bar2", {valueEncoding: 'json', allowRedirect:1},function(err, v){
       if (err) throw(err)
       t.strictEqual(v, "HiBar")
       t.end()
@@ -167,18 +167,47 @@ test('sublevel-get-alias4', function (t) {
  
   base.alias(bar, fooBar3, function(err) {
     if (err) throw(err)
-    foo.get("bar3", {valueEncoding: 'json'},function(err, v){
+    foo.get("bar3", {valueEncoding: 'json', allowRedirect:1},function(err, v){
       if (err) throw(err)
       t.strictEqual(v, "HiBar")
       t.end()
     })
   })
 })
+test('sublevel-get-alias-redirect', function (t) {
+  var bar = base.subkey('bar')
+  var foo = base.subkey('foo')
+  var fooBar3 = base.subkey('foo/bar3')
+ 
+  base.alias("/foo/a/q", bar, function(err) {
+    if (err) throw(err)
+    foo.get("bar3", {valueEncoding: 'json', allowRedirect:2},function(err, v){
+      if (err) throw(err)
+      t.strictEqual(v, 3)
+      t.end()
+    })
+  })
+})
+test('sublevel-get-alias-redirect1', function (t) {
+  var bar = base.subkey('bar')
+  var foo = base.subkey('foo')
+  var fooBar3 = base.subkey('foo/bar3')
+ 
+  base.alias("/foo/a/q", bar, function(err) {
+    if (err) throw(err)
+    foo.get("bar3", {valueEncoding: 'json', allowRedirect:1},function(err, v){
+      if (err) throw(err)
+      t.strictEqual(v, '/foo/a/q')
+      t.end()
+    })
+  })
+})
+
 test('sublevel-path-get-self', function (t) {
   var bar = base.subkey('bar')
   bar.get({valueEncoding: 'json'}, function(err, v){
     if (err) throw(err)
-    t.equal(v, 'HiBar')
+    t.equal(v, '/foo/a/q')
     t.end()
   })
 })
@@ -186,7 +215,7 @@ test('sublevel-path-get-self2', function (t) {
   var bar = base.subkey('bar')
   bar.get(function(err, v){
     if (err) throw(err)
-    t.equal(v, '"HiBar"')
+    t.equal(v, '/foo/a/q')
     t.end()
   })
 })
