@@ -84,6 +84,7 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
         ready: @emit.bind(@, "ready")
         closing: @emit.bind(@, "closing")
         closed: @emit.bind(@, "closed")
+        error: @emit.bind(@, "error")
       for event, listener of @listeners
         nut.on event, listener 
       that = @

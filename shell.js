@@ -149,7 +149,8 @@
         this.listeners = {
           ready: this.emit.bind(this, "ready"),
           closing: this.emit.bind(this, "closing"),
-          closed: this.emit.bind(this, "closed")
+          closed: this.emit.bind(this, "closed"),
+          error: this.emit.bind(this, "error")
         };
         _ref = this.listeners;
         for (event in _ref) {
