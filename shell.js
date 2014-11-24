@@ -118,8 +118,21 @@
 
       Subkey.prototype.version = version;
 
+      Subkey.prototype.isLoading = function() {
+        return this._loaded === false;
+      };
+
+      Subkey.prototype.isLoaded = function() {
+        return this._loaded === true;
+      };
+
+      Subkey.prototype.isNotLoaded = function() {
+        return this._loaded == null;
+      };
+
       Subkey.prototype.loadValue = function(aCallback) {
         var that, vOptions;
+        this._loaded = false;
         aCallback || (aCallback = function() {});
         that = this;
         vOptions = this.options;
@@ -131,15 +144,32 @@
                 getRealKey: true
               }), function(err, value) {
                 that._realKey = nut.createSubkey(value, Subkey.bind(null, value), vOptions);
-                return aCallback(err, that);
+                aCallback(err, that);
+                return that._loaded = true;
               });
             } else {
-              return aCallback(null, that);
+              aCallback(null, that);
+              return that._loaded = true;
             }
           } else {
-            return aCallback(err, that);
+            aCallback(err, that);
+            return that._loaded = null;
           }
         });
+      };
+
+      Subkey.prototype.load = function(aReadyCallback) {
+        var vOptions;
+        if (this.isNotLoaded() && nut.isOpen() === true) {
+          vOptions = this.options;
+          if (vOptions && vOptions.loadValue !== false) {
+            return this.loadValue(aReadyCallback);
+          } else {
+            if (aReadyCallback) {
+              return aReadyCallback(null, this);
+            }
+          }
+        }
       };
 
       Subkey.prototype.init = function(aReadyCallback) {
@@ -157,12 +187,14 @@
           listener = _ref[event];
           nut.on(event, listener);
         }
-        that = this;
+        this._loaded = null;
         vOptions = this.options;
-        if (vOptions && vOptions.loadValue !== false && nut.isOpen() === true) {
-          this.loadValue(aReadyCallback);
-        }
-        this.post(this.path(), function(op, add) {
+        that = this;
+        this.load(aReadyCallback);
+        this.on("ready", function() {
+          return that.load(aReadyCallback);
+        });
+        return this.post(this.path(), function(op, add) {
           var vValue;
           switch (op.type) {
             case "del":
@@ -180,7 +212,7 @@
                   that._realKey.free();
                   that._realKey = void 0;
                 }
-                if (that.options && that.options.valueEncoding === "json" && Subkey.isAlias(vValue)) {
+                if (vOptions && vOptions.valueEncoding === "json" && Subkey.isAlias(vValue)) {
                   return nut.get(vValue, [], that.mergeOpts({
                     getRealKey: true
                   }), function(err, value) {
@@ -188,15 +220,6 @@
                   });
                 }
               }
-          }
-        });
-        return this.on("ready", function() {
-          if (vOptions && vOptions.loadValue !== false) {
-            return that.loadValue(aReadyCallback);
-          } else {
-            if (aReadyCallback) {
-              return aReadyCallback(null, that);
-            }
           }
         });
       };

@@ -62,7 +62,14 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
     Class: Subkey
     _NUT: nut
     version: version
+    isLoading: ->
+      @_loaded is false
+    isLoaded: ->
+      @_loaded is true
+    isNotLoaded: ->
+      not @_loaded?
     loadValue: (aCallback) ->
+      @_loaded = false
       aCallback ||= ->
       that = @
       vOptions = @options
@@ -73,10 +80,20 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
             nut.get value, [], that.mergeOpts({getRealKey: true}), (err, value)->
               that._realKey = nut.createSubkey(value, Subkey.bind(null, value), vOptions)
               aCallback(err, that)
+              that._loaded = true
           else
             aCallback(null, that)
+            that._loaded = true
         else
           aCallback(err, that)
+          that._loaded = null
+    load: (aReadyCallback)->
+      if @isNotLoaded() and nut.isOpen() is true
+        vOptions = @options
+        if vOptions and vOptions.loadValue isnt false
+          @loadValue aReadyCallback
+        else
+          aReadyCallback(null, @) if aReadyCallback
     init: (aReadyCallback)->
       @methods = {}
       @unhooks = []
@@ -87,10 +104,12 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
         error: @emit.bind(@, "error")
       for event, listener of @listeners
         nut.on event, listener 
-      that = @
+      @_loaded = null # null means not loaded, true means loaded, false means loading
       vOptions = @options
-      if vOptions and vOptions.loadValue isnt false and nut.isOpen() is true #isnt undefined # maybe it's a mock, so no isOpen()
-        @loadValue aReadyCallback
+      that = @
+      @load(aReadyCallback)
+      @on "ready", ->
+        that.load(aReadyCallback)
       @post @path(), (op, add)->
         switch op.type
           when "del"
@@ -107,15 +126,9 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
               if that._realKey
                 that._realKey.free()
                 that._realKey = undefined
-              if that.options and that.options.valueEncoding is "json" and Subkey.isAlias(vValue)
+              if vOptions and vOptions.valueEncoding is "json" and Subkey.isAlias(vValue)
                 nut.get vValue, [], that.mergeOpts({getRealKey: true}), (err, value)->
                   that._realKey = nut.createSubkey(value, Subkey.bind(null, value), vOptions)
-      @on "ready", ->
-        # try to get the attriubtes from database
-        if vOptions and vOptions.loadValue isnt false
-          that.loadValue(aReadyCallback)
-        else
-          aReadyCallback(null, that) if aReadyCallback
     final: ->
       #deregister all hooks
       unhooks = @unhooks
