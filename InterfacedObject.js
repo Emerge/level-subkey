@@ -13,6 +13,7 @@
 
     function InterfacedObject() {
       this.RefCount = 0;
+      this.setMaxListeners(Infinity);
     }
 
     InterfacedObject.prototype.addRef = function() {

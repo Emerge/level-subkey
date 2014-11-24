@@ -18,6 +18,7 @@ module.exports = class InterfacedObject
   inherits InterfacedObject, EventEmitter
   constructor: ->
     @RefCount = 0
+    @setMaxListeners(Infinity)
   addRef: ->
     ++@RefCount
   destroy: ->
