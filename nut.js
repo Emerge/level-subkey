@@ -1,10 +1,13 @@
-var minimatch = require('minimatch')
-var path = require('./path')
-var hooks = require('./hooks')
-var ltgt = require('ltgt')
-var precodec = require('./codec')
-var PATH_SEP = precodec.PATH_SEP
-var SUBKEY_SEP = precodec.SUBKEY_SEP
+var minimatch   = require('minimatch')
+var path        = require('./path')
+var hooks       = require('./hooks')
+var ltgt        = require('ltgt')
+var precodec    = require('./codec')
+var PATH_SEP    = precodec.PATH_SEP
+var SUBKEY_SEP  = precodec.SUBKEY_SEP
+var Errors      = require("./errors")
+
+WriteError     = Errors.WriteError
 
 function isFunction (f) {
   return 'function' === typeof f
@@ -18,6 +21,9 @@ function isObject (f) {
   return f && 'object' === typeof f
 }
 
+function isAlias(aKey) {
+  return isString(aKey) && aKey.length > 0 && aKey[0] === PATH_SEP
+}
 function pathArrayToPath(aPath) {
     return path.join(aPath)
 }
@@ -141,9 +147,13 @@ exports = module.exports = function (db, precodec, codec) {
   openDB()
 
   return {
+    _db: db,
+    isAlias: isAlias,
     isOpen: function(){
-        var result = db.isOpen()
-        return result
+        if (db.isOpen) {
+          var result = db.isOpen()
+          return result
+        }
     },
     open: openDB,
     close: function(cb) {
@@ -183,8 +193,10 @@ exports = module.exports = function (db, precodec, codec) {
         } else {
           result = _subkeys[vKeyPath]
           if (result) {
-              if (options && options.addRef !== false) result.addRef()
-              if (callback) callback(null, result)
+              if (!options || options.addRef !== false) result.addRef()
+              if (callback) {
+                callback(null, result)
+              }
           } else {
               result = new aNewSubkeyProc(options, callback)
               _subkeys[vKeyPath] = result
@@ -252,7 +264,7 @@ exports = module.exports = function (db, precodec, codec) {
 
       opts = opts || {}
 
-      if('object' !== typeof opts) throw new Error('opts must be object, was:'+ opts) 
+      if('object' !== typeof opts) throw new WriteError('opts must be object, was:'+ opts) 
 
       if('function' === typeof opts) cb = opts, opts = {}
 
@@ -285,11 +297,9 @@ exports = module.exports = function (db, precodec, codec) {
       else
         cb()
     },
-    get: function (key, path, opts, cb) {
-      opts.asBuffer = codec.isValueAsBuffer(opts)
+    get: function (key, aPath, opts, cb) {
       function getRedirect(aDb, aKey, aOptions) {
-        console.log(aOptions.allowRedirect, " redirect:", aKey)
-        var vNeedRedirect = aOptions.valueEncoding === "json" && aKey.length > 0 && aKey[0] === PATH_SEP
+        var vNeedRedirect = aOptions.valueEncoding === "json" && isAlias(aKey)
         if (aOptions.allowRedirect > 0 && vNeedRedirect) {
           aOptions.allowRedirect--
           aDb.get(encodePath(resolveKeyPath([], aKey), aOptions), aOptions, function(err, value) {
@@ -298,10 +308,17 @@ exports = module.exports = function (db, precodec, codec) {
               vNeedRedirect = getRedirect(aDb, value, aOptions)
               switch (vNeedRedirect) {
                 case 1:
-                  cb(null, value)
+                  if (aOptions.getRealKey === true)
+                    cb(new RedirectExceedError("Exceeded maximum redirect attempts"), value)
+                  else
+                    cb(null, value)
                   break
                 case 0:
-                  cb(null, codec.decodeValue(value, aOptions))
+                  if (aOptions.getRealKey === true) {
+                    cb(null, aKey)
+                  } else {
+                    cb(null, codec.decodeValue(value, aOptions))
+                  }
                   break
               } //switch(vNeedRedirect)
             }
@@ -312,20 +329,30 @@ exports = module.exports = function (db, precodec, codec) {
           else return 0
         }
       }
+      opts.asBuffer = codec.isValueAsBuffer(opts)
       return (db.db || db).get(
-        encodePath(resolveKeyPath(path, key), opts),
+        encodePath(resolveKeyPath(aPath, key), opts),
         opts,
         function (err, value) {
           if(err) cb(err)
           else {
             var vOpts = opts || options
+            if (vOpts.getRealKey === true && vOpts.allowRedirect == null)
+              vOpts.allowRedirect = 6
             var vNeedRedirect = getRedirect((db.db || db), value, vOpts)
             switch (vNeedRedirect) {
               case 1:
-                cb(null, value)
+                if (vOpts.getRealKey === true)
+                  cb(new RedirectExceedError("Exceeded maximum redirect attempts"), value)
+                else
+                  cb(null, value)
                 break
               case 0:
-                cb(null, codec.decodeValue(value, vOpts))
+                if (vOpts.getRealKey === true)
+                  cb(null, path.resolve(aPath, key))
+                else {
+                  cb(null, codec.decodeValue(value, vOpts))
+                }
                 break
             }
           }
@@ -450,10 +477,10 @@ exports = module.exports = function (db, precodec, codec) {
 
 }
 
-exports.getPathArray = getPathArray
+exports.getPathArray    = getPathArray
 exports.pathArrayToPath = pathArrayToPath
 exports.pathToPathArray = pathToPathArray
-exports.resolveKeyPath = resolveKeyPath
+exports.resolveKeyPath  = resolveKeyPath
 exports.FILTER_INCLUDED =  0
 exports.FILTER_EXCLUDED =  1
 exports.FILTER_STOPPED  = -1
