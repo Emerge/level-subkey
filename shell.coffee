@@ -4,10 +4,15 @@ path          = require("./path")
 through       = require("through")
 addpre        = require("./range").addPrefix
 _nut          = require("./nut")
-errors        = require("levelup/lib/errors")
+errors        = require("./errors")
+levelUtil     = require("levelup/lib/util")
 WriteStream   = require("levelup/lib/write-stream")
 ReadStream    = require('levelup/lib/read-stream')
 InterfacedObject = require("./InterfacedObject")
+
+ReadError     = errors.ReadError
+NotFoundError = errors.NotFoundError
+dispatchError = levelUtil.dispatchError
 
 setImmediate  = global.setImmediate or process.nextTick
 
@@ -41,9 +46,38 @@ version = require("./package.json").version
 sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteStream = WriteStream) ->
   class Subkey
     inherits(Subkey, InterfacedObject)
+    @.prototype.__defineGetter__ "sublevels", ->
+      deprecate "sublevels, all subkeys(sublevels) have cached on nut now."
+      r = nut.subkeys(path.join(@_pathArray, "*"))
+      result = {}
+      for k of r
+        result[path.basename(k)] = r[k]
+      result
+    @.prototype.__defineGetter__ "name", ->
+      l = @_pathArray.length
+      if l > 0 then @_pathArray[l-1] else PATH_SEP
+    @.prototype.__defineGetter__ "fullName", ->
+      PATH_SEP + @_pathArray.join(PATH_SEP)
+    @isAlias: nut.isAlias
+    Class: Subkey
     _NUT: nut
     version: version
-    init: ->
+    loadValue: (aCallback) ->
+      aCallback ||= ->
+      that = @
+      vOptions = @options
+      nut.get @fullName, [], vOptions, (err, value) ->
+        if not err?
+          that.value = value
+          if vOptions.valueEncoding == "json" and Subkey.isAlias(value)
+            nut.get value, [], that.mergeOpts({getRealKey: true}), (err, value)->
+              that._realKey = nut.createSubkey(value, Subkey.bind(null, value), vOptions)
+              aCallback(err, that)
+          else
+            aCallback(null, that)
+        else
+          aCallback(err, that)
+    init: (aReadyCallback)->
       @methods = {}
       @unhooks = []
       @listeners =
@@ -52,6 +86,35 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
         closed: @emit.bind(@, "closed")
       for event, listener of @listeners
         nut.on event, listener 
+      that = @
+      vOptions = @options
+      if vOptions and vOptions.loadValue isnt false and nut.isOpen() is true #isnt undefined # maybe it's a mock, so no isOpen()
+        @loadValue aReadyCallback
+      @post @path(), (op, add)->
+        switch op.type
+          when "del"
+            #TODO: it need delete all subkeys?
+            # state?
+            that.value = undefined
+            if that._realKey
+              that._realKey.free()
+              that._realKey = undefined
+          when "put"
+            vValue = op.value
+            if that.value isnt vValue
+              that.value = vValue
+              if that._realKey
+                that._realKey.free()
+                that._realKey = undefined
+              if that.options and that.options.valueEncoding is "json" and Subkey.isAlias(vValue)
+                nut.get vValue, [], that.mergeOpts({getRealKey: true}), (err, value)->
+                  that._realKey = nut.createSubkey(value, Subkey.bind(null, value), vOptions)
+      @on "ready", ->
+        # try to get the attriubtes from database
+        if vOptions and vOptions.loadValue isnt false
+          that.loadValue(aReadyCallback)
+        else
+          aReadyCallback(null, that) if aReadyCallback
     final: ->
       #deregister all hooks
       unhooks = @unhooks
@@ -80,22 +143,7 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
       @_pathArray = aKeyPath
       @self = @
 
-      @__defineGetter__ "sublevels", ->
-        deprecate "sublevels, all subkeys(sublevels) have cached on nut now."
-        r = nut.subkeys(path.join(@_pathArray, "*"))
-        result = {}
-        for k of r
-          result[path.basename(k)] = r[k]
-        result
-      # end __defineGetter__ "sublevels"
-      @__defineGetter__ "name", ->
-        l = @_pathArray.length
-        if l > 0 then @_pathArray[l-1] else PATH_SEP
-      # end __defineGetter__ "name"
-      @__defineGetter__ "fullName", ->
-        PATH_SEP + @_pathArray.join(PATH_SEP)
-      # end __defineGetter__ "fullName"
-      @init()
+      @init(aCallback)
     parent: ()->
       p = path.dirname @path()
       result = nut.subkey(p)
@@ -146,12 +194,12 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
         @fullName
       else
         @subkey aPath, aOptions
-    subkey: (name, opts) ->
+    subkey: (name, opts, cb) ->
       vKeyPath = path.resolveArray(@_pathArray, name)
       vKeyPath.shift 0, 1
-      return Subkey(vKeyPath, @mergeOpts(opts))
-    sublevel: deprecate["function"]((name, opts) ->
-        @subkey name, opts
+      return Subkey(vKeyPath, @mergeOpts(opts), cb)
+    sublevel: deprecate["function"]((name, opts, cb) ->
+        @subkey name, opts, cb
       , "sublevel(), use `subkey(name)` or `path(name)` instead.")
  
     freeSubkeys: (aKeyPattern) ->
@@ -202,7 +250,20 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
           that.emit.apply that, vInfo
           cb.call that, null
         cb.call that, err  if err
+    ###
+      put it self:
+        put(cb)
+        put(value, cb)
+    ###
     put: (key, value, opts, cb) ->
+      if isFunction(key) or arguments.length is 0
+        cb = key
+        key = "."
+        value = @value
+      else if isFunction value
+        cb = value
+        value = key
+        key = "."
       @_doOperation({key:key, value:value, type: "put"}, opts, cb)
     del: (key, opts, cb) ->
       @_doOperation({key:key, type: "del"}, opts, cb)
@@ -225,9 +286,13 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
       that = @
       nut.get key, vPath, @mergeOpts(opts), (err, value) ->
         if err
-          cb.call that, new errors.NotFoundError("Key not found in database", err)
-        else
-          cb.call that, null, value
+          if (/notfound/i).test(err)
+            err = new NotFoundError(
+                'Key not found in database [' + key + ']', err)
+          else
+            err = new ReadError(err)
+          return dispatchError(that, err, cb)
+        cb.call that, null, value
     alias: (aKeyPath, aAlias, aCallback) ->
       if isFunction aAlias
         aCallback = aAlias

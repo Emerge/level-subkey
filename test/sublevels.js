@@ -29,7 +29,7 @@ test('subsections', function (t) {
   t.end()
 })
 
-test.only('sublevels-hooks-free', function (t) {
+test('sublevels-hooks-free', function (t) {
   var bar = base.subkey('newBar')
   var barLess = bar.subkey('Less')
   var barMore = bar.subkey('more')
@@ -54,7 +54,9 @@ test.only('sublevels-hooks-free', function (t) {
   bbl.free()
   t.equal(barLess.RefCount, 0)
   t.equal(barMore.RefCount, 0)
-
+  var barUHCount = bar.unhooks.length
+  var barLessUHCount = barLess.unhooks.length
+  var barMoreUHCount = barMore.unhooks.length
   bar.pre(function(){})
   bar.post(function(){})
   barLess.pre(function(){})
@@ -62,9 +64,9 @@ test.only('sublevels-hooks-free', function (t) {
   barMore.pre(function(){})
   barMore.post(function(){})
 
-  t.strictEqual(bar.unhooks.length, 2)
-  t.strictEqual(barLess.unhooks.length, 2)
-  t.strictEqual(barMore.unhooks.length, 2)
+  t.strictEqual(bar.unhooks.length, barUHCount+2)
+  t.strictEqual(barLess.unhooks.length, barLessUHCount+2)
+  t.strictEqual(barMore.unhooks.length, barMoreUHCount+2)
   var expected = {}
   //expected[bar.path()] = bar
   expected[barLess.path()] = barLess
@@ -88,6 +90,9 @@ test.only('sublevels-hooks-free', function (t) {
 test('sublevels-create-subkey-with-anyPath', function (t) {
   var foo = base.subkey('foo')
   var bar = foo.subkey('../bar')
+  t.ok(base instanceof base.Class, "should be instanceof Subkey")
+  t.ok(foo instanceof base.Class, "should be instanceof Subkey")
+  t.ok(bar instanceof base.Class, "should be instanceof Subkey")
   t.deepEqual(bar.pathAsArray(), ['bar'])
   var fooEggBig = foo.subkey('egg/big')
   t.deepEqual(fooEggBig.pathAsArray(), ['foo', 'egg', 'big'])

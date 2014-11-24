@@ -98,15 +98,32 @@ you cannot run level-subkey on a database you created with level-sublevel
 + alias(keyPath, alias, callback)
   * set an alias to aKeyPath
   * if db has alias method then use it, or use the K/V one.
-  * the K/V alias' value getter:
+  * the K/V alias real value to get:
     * the opts.allowRedirect > 0
-    * the value encoding should be JSON and value starts with "/" means it's a alias
-    * return the alias key string if disallow redirect.
+    * the value encoding should be JSON and value starts with "/" means it's a redirected key.
+    * return the redirected key string if redirect count limit exceeded.
+  * the K/V alias real key to get:
+    * the opts.getRealKey = true
+    * the default opts.allowRedirect is 6 if no setting allowRedirect
+    * the value encoding should be JSON and value starts with "/" means it's a redirected key.
+    * throw error if redirect count limit exceeded.
   + alias(alias, callback): create a alias for this subkey.
 + subkey.get([options], callback) to get itself value.
+* the valueEncoding and keyEncoding should not change on the same subkey.
+* you must escape the PATH_SEP for the first char(it as mark the redirection/alias key) if the valueEncoding is string(utf8)
++ Class property to get Subkey Class.
+* async problem:
+  * sync is very simple.
+  * a = subkey("mykey") //the nut will cache this key.
+  * b = subkey("mykey", function(err, theKey){})
+  * the nut.createSubkey must change to async too.
 
 ## todo
 
+* Alias Process Way
+  * transparent alias: all operations on an alias will be passed to a real key.
+  * let the alias.value point to the real key.
++ loading state
 + index the integer and json object key on some subkey.
   * mechanism:1
     + customize precodec in subkey()'s options
@@ -155,9 +172,9 @@ The internal key path storage like file path, but the path separator can be cust
 ``` js
     var precodec = require('sublevel/codec')
     precodec.SUBKEY_SEPS = ["/|-", "#.+"] //the first char is the default subkey separator, others are customize separator. 
-    sublevel.put("some", "value", {separator: '|'})
+    subkey.put("some", "value", {separator: '|'})
     //list all key/value on separator "|"
-    sublevel.createReadStream({separator: '.'})
+    subkey.createReadStream({separator: '.'})
     //it will return all prefixed "|" keys: {key: "|abc", value:....}
 ```
 
@@ -197,6 +214,7 @@ var Subkey = require('level-subkey')
 
 var db = Subkey(LevelUp('/tmp/sublevel-example'))
 var stuff = db.subkey('stuff')
+//it is same as stuff = db.sublevel('stuff')  but db.sublevel is deprecated.
 
 //put a key into the main levelup
 db.put(key, value, function () {})
