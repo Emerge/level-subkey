@@ -279,4 +279,24 @@ test('sublevel-path-loadValueAgain', function (t) {
     t.end()
   })
 })
+test('sublevel-path-put', function (t) {
+  var fooaq= base.subkey('foo/a/q', {addRef:false})
+  var fooBar4 = base.subkey('foo/bar4', {valueEncoding: 'json'}, function(err, result){
+    t.notOk(err, 'no error')
+    t.equal(result.path(), '/foo/bar4')
+    t.equal(result.value, '/bar')
+    t.strictEqual(result._realKey, fooaq, "should has realKey")
+    t.equal(fooaq.RefCount, 1)
+    result.put(1234, function(err){
+      t.notOk(err, 'no error')
+      t.equal(result.value, 1234)
+      result.value = {hi:1234}
+      result.put(function(err){
+        t.notOk(err, 'no error')
+        t.deepEqual(result.value,  {hi:1234})
+        t.end()
+      })
+    })
+  })
+})
 
