@@ -150,7 +150,7 @@ exports = module.exports = function (db, precodec, codec) {
     _db: db,
     isAlias: isAlias,
     isOpen: function(){
-        if (db.isOpen) {
+        if (db.isOpen) { //maybe it's a mock, so no isOpen()
           var result = db.isOpen()
           return result
         }
