@@ -73,7 +73,7 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
       @_loaded is false
     isLoaded: ->
       @_loaded is true
-    isNotLoaded: ->
+    isUnload: ->
       not @_loaded?
     isAlias: ->
       @_realKey?
@@ -98,7 +98,7 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
           aCallback(err, that)
           that._loaded = null
     load: (aReadyCallback)->
-      if @isNotLoaded() and nut.isOpen() is true
+      if @isUnload() and nut.isOpen() is true
         vOptions = @options
         if vOptions and vOptions.loadValue isnt false
           @loadValue aReadyCallback
@@ -225,6 +225,9 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
       return @_realKey.subkey.apply(@_realKey, arguments) if @_realKey
       vKeyPath = path.resolveArray(@_pathArray, name)
       vKeyPath.shift 0, 1
+      if isFunction opts
+        cb = opts
+        opts = {}
       return Subkey(vKeyPath, @mergeOpts(opts), cb)
     sublevel: deprecate["function"]((name, opts, cb) ->
         @subkey name, opts, cb

@@ -224,6 +224,9 @@ Create(or get from a global cache) a new Subkey instance:
   * keyPath: the key path can be a relative or absolute path.
   * options: the options object is optional.
     * loadValue: boolean, defalut is true. whether load the value of the key after the key is created.
+    * forceCreate: boolean, defalut is false. whether ignore the global cache always create a new Subkey instance.
+    * addRef: boolean, defalut is true. whether add a reference count to the key instance in the global cache.
+      * only free when RefCount is less than zero.
 * readyCallback: 
   * function readyCallback(err, theKey)
     * theKey may be set even though the error occur

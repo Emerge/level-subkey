@@ -142,7 +142,7 @@
         return this._loaded === true;
       };
 
-      Subkey.prototype.isNotLoaded = function() {
+      Subkey.prototype.isUnload = function() {
         return this._loaded == null;
       };
 
@@ -182,7 +182,7 @@
 
       Subkey.prototype.load = function(aReadyCallback) {
         var vOptions;
-        if (this.isNotLoaded() && nut.isOpen() === true) {
+        if (this.isUnload() && nut.isOpen() === true) {
           vOptions = this.options;
           if (vOptions && vOptions.loadValue !== false) {
             return this.loadValue(aReadyCallback);
@@ -383,6 +383,10 @@
         }
         vKeyPath = path.resolveArray(this._pathArray, name);
         vKeyPath.shift(0, 1);
+        if (isFunction(opts)) {
+          cb = opts;
+          opts = {};
+        }
         return Subkey(vKeyPath, this.mergeOpts(opts), cb);
       };
 

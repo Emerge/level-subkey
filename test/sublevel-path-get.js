@@ -110,6 +110,11 @@ test('sublevel-path-parent', function (t) {
   var foo = base.subkey('foo')
   var barA = bar.subkey('Axq')
   var fooA1 = base.subkey('/foo/a/a3F2e/1')
+
+  t.notOk(bar.isAlias(), " should not be an alias")
+  t.notOk(barA.isAlias(), " should not be an alias")
+  t.notOk(foo.isAlias(), " should not be an alias")
+  t.notOk(fooA1.isAlias(), " should not be an alias")
  
   t.equal(bar.path(), '/bar')
   t.equal(bar.parent(), base, "bar's parent is root")
@@ -263,6 +268,7 @@ test('sublevel-path-loadValue', function (t) {
       t.equal(result.path(), '/foo/bar4')
       t.equal(result._value, '/bar')
       t.strictEqual(result._realKey, fooaq, result.path()+ " should has realKey")
+      t.ok(result.isAlias(), " should be an alias")
       t.equal(result.value, result._realKey.value)
       t.equal(fooaq.RefCount, 1)
       t.end()
@@ -276,6 +282,7 @@ test('sublevel-path-loadValueAgain', function (t) {
     t.equal(result.path(), '/foo/bar4')
     t.equal(result._value, '/bar')
     t.strictEqual(result._realKey, fooaq, "should has realKey")
+    t.ok(result.isAlias(), " should be an alias")
     t.equal(result.value, result._realKey.value)
     t.equal(fooaq.RefCount, 1)
     t.end()
@@ -288,6 +295,7 @@ test('sublevel-path-put', function (t) {
     t.equal(result.path(), '/foo/bar4')
     t.equal(result._value, '/bar')
     t.strictEqual(result._realKey, fooaq, "should has realKey")
+    t.ok(result.isAlias(), " should be an alias")
     t.equal(result.value, result._realKey.value)
     t.equal(fooaq.RefCount, 1)
     result.put(1234, function(err){
@@ -303,6 +311,24 @@ test('sublevel-path-put', function (t) {
         t.end()
       })
     })
+  })
+})
+test('sublevel-path-del-itself', function (t) {
+  var fooBar4 = base.subkey('foo/bar4', function(err, result){
+      console.log("try del:")
+      t.notOk(err, 'no error')
+      t.equal(result.path(), '/foo/bar4')
+      result.del(function(err){
+        console.log("del:", err)
+        t.notOk(err, 'no error')
+        base.get("foo/bar4", function(err, v){
+          t.ok(err, "should be an error")
+          t.ok(err.notFound, "should be notFound")
+          t.equal(result._realKey, undefined)
+          t.equal(result._value, undefined)
+          t.end()
+        })
+      })
   })
 })
 
