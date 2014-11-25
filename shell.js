@@ -110,6 +110,22 @@
         return PATH_SEP + this._pathArray.join(PATH_SEP);
       });
 
+      Subkey.prototype.__defineGetter__("value", function() {
+        if (this._realKey != null) {
+          return this._realKey._value;
+        } else {
+          return this._value;
+        }
+      });
+
+      Subkey.prototype.__defineSetter__("value", function(aValue) {
+        if (this._realKey != null) {
+          return this._realKey._value = aValue;
+        } else {
+          return this._value = aValue;
+        }
+      });
+
       Subkey.isAlias = nut.isAlias;
 
       Subkey.prototype.Class = Subkey;
@@ -138,14 +154,16 @@
         vOptions = this.options;
         return nut.get(this.fullName, [], vOptions, function(err, value) {
           if (err == null) {
-            that.value = value;
+            that._value = value;
             if (vOptions.valueEncoding === "json" && Subkey.isAlias(value)) {
               return nut.get(value, [], that.mergeOpts({
                 getRealKey: true
               }), function(err, value) {
-                that._realKey = nut.createSubkey(value, Subkey.bind(null, value), vOptions);
-                aCallback(err, that);
-                return that._loaded = true;
+                return nut.createSubkey(value, Subkey.bind(null, value), vOptions, function(err, result) {
+                  that._realKey = result;
+                  aCallback(err, that);
+                  return that._loaded = true;
+                });
               });
             } else {
               aCallback(null, that);
@@ -198,7 +216,7 @@
           var vValue;
           switch (op.type) {
             case "del":
-              that.value = void 0;
+              that._value = void 0;
               if (that._realKey) {
                 that._realKey.free();
                 return that._realKey = void 0;
@@ -206,8 +224,8 @@
               break;
             case "put":
               vValue = op.value;
-              if (that.value !== vValue) {
-                that.value = vValue;
+              if (that._value !== vValue) {
+                that._value = vValue;
                 if (that._realKey) {
                   that._realKey.free();
                   that._realKey = void 0;
@@ -226,6 +244,10 @@
 
       Subkey.prototype.final = function() {
         var event, i, listener, unhooks, _ref;
+        if (this._realKey) {
+          this._realKey.free();
+          this._realKey = void 0;
+        }
         unhooks = this.unhooks;
         i = 0;
         while (i < unhooks.length) {
@@ -272,7 +294,7 @@
         return result;
       };
 
-      Subkey.prototype.setPath = function(aPath) {
+      Subkey.prototype.setPath = function(aPath, aCallback) {
         var vPath;
         aPath = getPathArray(aPath);
         if (aPath) {
@@ -284,7 +306,7 @@
             nut.delSubkey(vPath);
             this.final();
             this._pathArray = aPath;
-            this.init();
+            this.init(aCallback);
             return true;
           }
         }
@@ -381,6 +403,9 @@
 
       Subkey.prototype._doOperation = function(aOperation, opts, cb) {
         var that, vInfo, vPath, vType;
+        if (this._realKey) {
+          return this._realKey._doOperation.apply(this._realKey, arguments);
+        }
         if (isFunction(opts)) {
           cb = opts;
           opts = {};
@@ -558,6 +583,9 @@
 
       Subkey.prototype.readStream = function(opts) {
         var filterStream, isFilterExists, it, stream;
+        if (this._realKey) {
+          return this._realKey.readStream.apply(this._realKey, arguments);
+        }
         opts = this.mergeOpts(opts);
         assignDeprecatedPrefixOption(opts);
         opts.path = getPathArray(opts.path, this._pathArray) || this._pathArray;
@@ -617,6 +645,9 @@
       Subkey.prototype.createKeyStream = Subkey.prototype.keyStream;
 
       Subkey.prototype.writeStream = function(opts) {
+        if (this._realKey) {
+          return this._realKey.writeStream.apply(this._realKey, arguments);
+        }
         opts = this.mergeOpts(opts);
         return new aCreateWriteStream(opts, this);
       };

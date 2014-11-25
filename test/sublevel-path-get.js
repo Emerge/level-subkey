@@ -256,13 +256,14 @@ test('sublevel-path-get-realKey', function (t) {
 
 test('sublevel-path-loadValue', function (t) {
   var fooaq= base.subkey('foo/a/q')
-  base.alias('/bar', 'foo/bar4', function(err) {
+  base.alias('/bar', '/foo/bar4', function(err) {
     t.notOk(err, 'no error')
     var fooBar4 = base.subkey('foo/bar4', {valueEncoding: 'json'}, function(err, result){
       t.notOk(err, 'no error')
       t.equal(result.path(), '/foo/bar4')
-      t.equal(result.value, '/bar')
-      t.strictEqual(result._realKey, fooaq, "should has realKey")
+      t.equal(result._value, '/bar')
+      t.strictEqual(result._realKey, fooaq, result.path()+ " should has realKey")
+      t.equal(result.value, result._realKey.value)
       t.equal(fooaq.RefCount, 1)
       t.end()
     })
@@ -273,8 +274,9 @@ test('sublevel-path-loadValueAgain', function (t) {
   var fooBar4 = base.subkey('foo/bar4', {valueEncoding: 'json'}, function(err, result){
     t.notOk(err, 'no error')
     t.equal(result.path(), '/foo/bar4')
-    t.equal(result.value, '/bar')
+    t.equal(result._value, '/bar')
     t.strictEqual(result._realKey, fooaq, "should has realKey")
+    t.equal(result.value, result._realKey.value)
     t.equal(fooaq.RefCount, 1)
     t.end()
   })
@@ -284,16 +286,20 @@ test('sublevel-path-put', function (t) {
   var fooBar4 = base.subkey('foo/bar4', {valueEncoding: 'json'}, function(err, result){
     t.notOk(err, 'no error')
     t.equal(result.path(), '/foo/bar4')
-    t.equal(result.value, '/bar')
+    t.equal(result._value, '/bar')
     t.strictEqual(result._realKey, fooaq, "should has realKey")
+    t.equal(result.value, result._realKey.value)
     t.equal(fooaq.RefCount, 1)
     result.put(1234, function(err){
       t.notOk(err, 'no error')
       t.equal(result.value, 1234)
+      t.equal(result.value, result._realKey.value)
       result.value = {hi:1234}
+      t.equal(result.value, result._realKey.value)
       result.put(function(err){
         t.notOk(err, 'no error')
         t.deepEqual(result.value,  {hi:1234})
+        t.equal(result.value, result._realKey.value)
         t.end()
       })
     })

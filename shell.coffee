@@ -58,6 +58,13 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
       if l > 0 then @_pathArray[l-1] else PATH_SEP
     @.prototype.__defineGetter__ "fullName", ->
       PATH_SEP + @_pathArray.join(PATH_SEP)
+    @.prototype.__defineGetter__ "value", ->
+      if @_realKey? then @_realKey._value else @_value
+    @.prototype.__defineSetter__ "value", (aValue)->
+      if @_realKey?
+        @_realKey._value = aValue
+      else
+        @_value = aValue
     @isAlias: nut.isAlias
     Class: Subkey
     _NUT: nut
@@ -75,12 +82,13 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
       vOptions = @options
       nut.get @fullName, [], vOptions, (err, value) ->
         if not err?
-          that.value = value
+          that._value = value
           if vOptions.valueEncoding == "json" and Subkey.isAlias(value)
             nut.get value, [], that.mergeOpts({getRealKey: true}), (err, value)->
-              that._realKey = nut.createSubkey(value, Subkey.bind(null, value), vOptions)
-              aCallback(err, that)
-              that._loaded = true
+              nut.createSubkey value, Subkey.bind(null, value), vOptions, (err, result)->
+                that._realKey = result
+                aCallback(err, that)
+                that._loaded = true
           else
             aCallback(null, that)
             that._loaded = true
@@ -115,14 +123,14 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
           when "del"
             #TODO: it need delete all subkeys?
             # state?
-            that.value = undefined
+            that._value = undefined
             if that._realKey
               that._realKey.free()
               that._realKey = undefined
           when "put"
             vValue = op.value
-            if that.value isnt vValue
-              that.value = vValue
+            if that._value isnt vValue
+              that._value = vValue
               if that._realKey
                 that._realKey.free()
                 that._realKey = undefined
@@ -130,6 +138,9 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
                 nut.get vValue, [], that.mergeOpts({getRealKey: true}), (err, value)->
                   that._realKey = nut.createSubkey(value, Subkey.bind(null, value), vOptions)
     final: ->
+      if @_realKey
+        @_realKey.free()
+        @_realKey = undefined
       #deregister all hooks
       unhooks = @unhooks
       i = 0
@@ -166,7 +177,7 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
         p = path.dirname p
         result = nut.subkey(p)
       return result
-    setPath: (aPath) ->
+    setPath: (aPath, aCallback) ->
       aPath = getPathArray(aPath)
       if aPath
         aPath = path.normalizeArray(aPath)
@@ -175,7 +186,7 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
           nut.delSubkey(vPath)
           @final()
           @_pathArray = aPath
-          @init()
+          @init(aCallback)
           return true
       false
     _addHook: (key, callback, hooksAdd) ->
@@ -229,6 +240,7 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
       super
       @final()
     _doOperation: (aOperation, opts, cb) ->
+      return @_realKey._doOperation.apply(@_realKey, arguments) if @_realKey
       if isFunction opts
         cb = opts
         opts = {}
@@ -336,6 +348,7 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
         unhook()
 
     readStream: (opts) ->
+      return @_realKey.readStream.apply(@_realKey, arguments) if @_realKey
       opts = @mergeOpts(opts)
       assignDeprecatedPrefixOption opts
       
@@ -371,26 +384,27 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
         filterStream.writable = false
         stream = stream.pipe(filterStream)
       stream
-    createReadStream: Subkey.prototype.readStream
+    createReadStream: @.prototype.readStream
 
     valueStream: (opts) ->
       opts = opts or {}
       opts.values = true
       opts.keys = false
       @readStream opts
-    createValueStream: Subkey.prototype.valueStream
+    createValueStream: @.prototype.valueStream
 
     keyStream: (opts) ->
       opts = opts or {}
       opts.values = false
       opts.keys = true
       @readStream opts
-    createKeyStream: Subkey.prototype.keyStream
+    createKeyStream: @.prototype.keyStream
 
     writeStream: (opts) ->
+      return @_realKey.writeStream.apply(@_realKey, arguments) if @_realKey
       opts = @mergeOpts(opts)
       new aCreateWriteStream(opts, @)
-    createWriteStream: Subkey.prototype.writeStream
+    createWriteStream: @.prototype.writeStream
 
     pathStream: (opts) ->
       opts = opts or {}
@@ -398,7 +412,7 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
       opts.separatorRaw = true
       opts.gte = "0"
       @readStream opts
-    createPathStream: Subkey.prototype.pathStream
+    createPathStream: @.prototype.pathStream
 
   Subkey
 

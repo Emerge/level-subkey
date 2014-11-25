@@ -108,6 +108,12 @@ you cannot run level-subkey on a database you created with level-sublevel
     * the value encoding should be JSON and value starts with "/" means it's a redirected key.
     * throw error if redirect count limit exceeded.
   + alias(alias, callback): create a alias for this subkey.
+    * Alias Process Way
+      * transparent alias: all operations on an alias will be passed to the real key.
+      * subkey._value is the original the value of the key(alias point ot the another key).
+      * subkey.value is the real value:
+        * value = if @_realKey? then @_realKey._value else @_value
++ loading state
 + subkey.get([options], callback) to get itself value.
 * the valueEncoding and keyEncoding should not change on the same subkey.
 * you must escape the PATH_SEP for the first char(it as mark the redirection/alias key) if the valueEncoding is string(utf8)
@@ -120,10 +126,6 @@ you cannot run level-subkey on a database you created with level-sublevel
 
 ## todo
 
-* Alias Process Way
-  * transparent alias: all operations on an alias will be passed to a real key.
-  * let the alias.value point to the real key.
-+ loading state
 + index the integer and json object key on some subkey.
   * mechanism:1
     + customize precodec in subkey()'s options
