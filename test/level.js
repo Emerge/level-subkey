@@ -94,7 +94,6 @@ function createPostHooks (db) {
         next()
       })
   
-      console.log(db, args)
       db[method].apply(db, args.concat(function (err) {
         console.log('**************8')
         if(err) console.log(err.stack)

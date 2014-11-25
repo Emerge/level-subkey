@@ -146,6 +146,10 @@
         return this._loaded == null;
       };
 
+      Subkey.prototype.isAlias = function() {
+        return this._realKey != null;
+      };
+
       Subkey.prototype.loadValue = function(aCallback) {
         var that, vOptions;
         this._loaded = false;
@@ -374,6 +378,9 @@
 
       Subkey.prototype.subkey = function(name, opts, cb) {
         var vKeyPath;
+        if (this._realKey) {
+          return this._realKey.subkey.apply(this._realKey, arguments);
+        }
         vKeyPath = path.resolveArray(this._pathArray, name);
         vKeyPath.shift(0, 1);
         return Subkey(vKeyPath, this.mergeOpts(opts), cb);
@@ -482,7 +489,17 @@
         }, opts, cb);
       };
 
+
+      /*TODO: del itself would destroy itself?  see: the post hook itself in init method.
+        del itself:
+        del(cb)
+       */
+
       Subkey.prototype.del = function(key, opts, cb) {
+        if (isFunction(key) || arguments.length === 0) {
+          cb = key;
+          key = this.path();
+        }
         return this._doOperation({
           key: key,
           type: "del"
@@ -527,6 +544,9 @@
       };
 
       Subkey.prototype.alias = function(aKeyPath, aAlias, aCallback) {
+        if (this._realKey) {
+          return this._realKey.alias.apply(this._realKey, arguments);
+        }
         if (isFunction(aAlias)) {
           aCallback = aAlias;
           aAlias = aKeyPath;

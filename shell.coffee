@@ -75,6 +75,8 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
       @_loaded is true
     isNotLoaded: ->
       not @_loaded?
+    isAlias: ->
+      @_realKey?
     loadValue: (aCallback) ->
       @_loaded = false
       aCallback ||= ->
@@ -220,6 +222,7 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
       else
         @subkey aPath, aOptions
     subkey: (name, opts, cb) ->
+      return @_realKey.subkey.apply(@_realKey, arguments) if @_realKey
       vKeyPath = path.resolveArray(@_pathArray, name)
       vKeyPath.shift 0, 1
       return Subkey(vKeyPath, @mergeOpts(opts), cb)
@@ -291,7 +294,14 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
         value = key
         key = "."
       @_doOperation({key:key, value:value, type: "put"}, opts, cb)
+    ###TODO: del itself would destroy itself?  see: the post hook itself in init method.
+      del itself:
+      del(cb)
+    ###
     del: (key, opts, cb) ->
+      if isFunction(key) or arguments.length is 0
+        cb = key
+        key = @path() #use absolute key path to delete alias key itself
       @_doOperation({key:key, type: "del"}, opts, cb)
     batch: (ops, opts, cb) ->
       @_doOperation(ops, opts, cb)
@@ -320,6 +330,7 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
           return dispatchError(that, err, cb)
         cb.call that, null, value
     alias: (aKeyPath, aAlias, aCallback) ->
+      return @_realKey.alias.apply(@_realKey, arguments) if @_realKey
       if isFunction aAlias
         aCallback = aAlias
         aAlias = aKeyPath

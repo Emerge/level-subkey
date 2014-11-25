@@ -110,6 +110,9 @@ you cannot run level-subkey on a database you created with level-sublevel
   + alias(alias, callback): create a alias for this subkey.
     * Alias Process Way
       * transparent alias: all operations on an alias will be passed to the real key.
+        * get/put/batch/alias/readStream/writeStream are passed to the real key.
+        * the post/pre hook is not passed.
+        * the del itself is not passed.
       * subkey._value is the original the value of the key(alias point ot the another key).
       * subkey.value is the real value:
         * value = if @_realKey? then @_realKey._value else @_value
@@ -126,6 +129,7 @@ you cannot run level-subkey on a database you created with level-sublevel
 
 ## todo
 
+* the Subkey instance life circle state manage.
 + index the integer and json object key on some subkey.
   * mechanism:1
     + customize precodec in subkey()'s options
@@ -146,8 +150,9 @@ you cannot run level-subkey on a database you created with level-sublevel
 
 The key is always string only unless it's an index.
 
-* Key Path
 * Key
+  * Key Path
+  * alias
 * Key attributes
 * Value
   * the value is json object format currently.
@@ -204,6 +209,52 @@ db.put("/stuff/animal/pig/.ear/.type", value, function(err){})
 // decoded key is: "/stuff/animal/pig/.ear/.type"
 
 ```
+
+## API
+
+### Subkey.subkey()
+
+Create(or get from a global cache) a new Subkey instance:
+
+* Subkey.subkey(keyPath, options, readyCallback)
+* Subkey.subkey(keyPath, readyCallback)
+
+
+* arguments:
+  * keyPath: the key path can be a relative or absolute path.
+  * options: the options object is optional.
+    * loadValue: boolean, defalut is true. whether load the value of the key after the key is created.
+* readyCallback: 
+  * function readyCallback(err, theKey)
+    * theKey may be set even though the error occur
+* return: the Subkey instance
+
+## Subkey.isAlias()
+
+Get the subkey itself whether is an alias or not.
+
+* arguments
+  * none
+* return: boolean
+
+## Subkey.alias()
+
+Create an alias for the keyPath:
+
+* Subkey.alias(keyPath, alias, callback)
+
+Create an alias for itself:
+
+* Subkey.alias(alias, callback)
+ 
+* arguments:
+  * keyPath: the key path can be a relative or absolute path.
+  * alias: the created alias key path.
+* callback: 
+  * function callback(err)
+* return: undefined
+
+
 
 ## Example
 
