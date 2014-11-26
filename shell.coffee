@@ -72,11 +72,17 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
     @.prototype.__defineGetter__ "value", ->
       if @_realKey? then @_realKey._value else @_value
     @.prototype.__defineSetter__ "value", (aValue)->
-      if @_realKey?
+      if aValue is undefined
+        if @_realKey?
+          @_realKey.free()
+          @_realKey = undefined
+        @_value = undefined
+        @setLoadingState "dirtied", true, {type:"del", key:@fullName}
+      else if @_realKey?
         @_realKey.value = aValue
       else if @_value isnt aValue
         @_value = aValue
-        @setLoadingState "dirtied", true, "value"
+        @setLoadingState "dirtied", true, {type:"put", key:@fullName, value:aValue}
     @.prototype.__defineGetter__ "loadingState", ->
       vState = @_loadingState_
       if not vState? then "unload" else ["loading", "loaded", "dirtied", "modifying", "modified", "deleted"][vState]
@@ -85,9 +91,9 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
     Class: Subkey
     _NUT: nut
     version: version
-    setLoadingState: (value, emitted = false, additional)->
+    setLoadingState: (value, emitted = false, param1, param2)->
       @_loadingState_ = LOADING_STATES[value]
-      @emit value, @, additional if emitted
+      @emit value, @, param1, param2 if emitted
     isLoading: ->
       @_loadingState_ is LOADING_STATES.loading
     isLoaded: ->
@@ -148,7 +154,7 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
         switch op.type
           when "del"
             #TODO: it need delete all subkeys?
-            # state?
+            # Do note free the object. just update value.
             that.setLoadingState "deleted", true
             that._value = undefined
             if that._realKey
@@ -238,11 +244,11 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
     prefix: deprecate["function"](->
         @pathAsArray()
       , "prefix(), use `pathAsArray()` instead, or use path() to return string path..")
-    path: (aPath, aOptions) ->
+    path: (aPath, aOptions, aCallback) ->
       if aPath is `undefined`
         @fullName
       else
-        @subkey aPath, aOptions
+        @subkey aPath, aOptions, aCallback
     subkey: (name, opts, cb) ->
       return @_realKey.subkey.apply(@_realKey, arguments) if @_realKey
       vKeyPath = path.resolveArray(@_pathArray, name)

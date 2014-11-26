@@ -131,11 +131,25 @@
       });
 
       Subkey.prototype.__defineSetter__("value", function(aValue) {
-        if (this._realKey != null) {
+        if (aValue === void 0) {
+          if (this._realKey != null) {
+            this._realKey.free();
+            this._realKey = void 0;
+          }
+          this._value = void 0;
+          return this.setLoadingState("dirtied", true, {
+            type: "del",
+            key: this.fullName
+          });
+        } else if (this._realKey != null) {
           return this._realKey.value = aValue;
         } else if (this._value !== aValue) {
           this._value = aValue;
-          return this.setLoadingState("dirtied", true, "value");
+          return this.setLoadingState("dirtied", true, {
+            type: "put",
+            key: this.fullName,
+            value: aValue
+          });
         }
       });
 
@@ -159,13 +173,13 @@
 
       Subkey.prototype.version = version;
 
-      Subkey.prototype.setLoadingState = function(value, emitted, additional) {
+      Subkey.prototype.setLoadingState = function(value, emitted, param1, param2) {
         if (emitted == null) {
           emitted = false;
         }
         this._loadingState_ = LOADING_STATES[value];
         if (emitted) {
-          return this.emit(value, this, additional);
+          return this.emit(value, this, param1, param2);
         }
       };
 
@@ -408,11 +422,11 @@
         return this.pathAsArray();
       }, "prefix(), use `pathAsArray()` instead, or use path() to return string path..");
 
-      Subkey.prototype.path = function(aPath, aOptions) {
+      Subkey.prototype.path = function(aPath, aOptions, aCallback) {
         if (aPath === undefined) {
           return this.fullName;
         } else {
-          return this.subkey(aPath, aOptions);
+          return this.subkey(aPath, aOptions, aCallback);
         }
       };
 

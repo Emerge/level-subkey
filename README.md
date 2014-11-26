@@ -132,6 +132,8 @@ you cannot run level-subkey on a database you created with level-sublevel
    * loading: the object is loading from database.
    * loaded: the object has already been loaded from database.
      * dirtied: the object has been modified, but not saved to database yet.
+       * triggered the dirtied event, the operation is an object item(see batch): {type:"put", key:keyName, value:value}
+         on "dirtied", (keyObj, operation)->
      * modifying: the object has been modified to database, but not loaded to the object(affect the loading state to loading)
      * modified: the object has been modified to database(not affect the loading state).
      * deleted: the object has been deleted from database(affect the object state to destroyed).
@@ -155,7 +157,7 @@ you cannot run level-subkey on a database you created with level-sublevel
     * advantage: .
     * disadvantage: performance down a little, key human-readable down a little.
       * the integer and json object can not be readable.
-+ LRU-cache supports
++ LRU-cache object supports
   + cache option(boolean, default: true)
 
 
@@ -167,7 +169,9 @@ The key is always string only unless it's an index.
   * Key Path
   * alias
 * Value
-  * get {asBuffer: false} can imporve performance for leveldown.
+  * can not be undefined, it used as deleted.
+  * can be null.
+  * get {asBuffer: false} can improve performance for leveldown.
 
 
 ## Stability
@@ -226,10 +230,13 @@ db.put("/stuff/animal/pig/.ear/.type", value, function(err){})
 
 ### Subkey.subkey()
 
-Create(or get from a global cache) a new Subkey instance:
+Create(or get from a global cache) a new Subkey instance,
+and load the value if this key is exists on the database
 
 * Subkey.subkey(keyPath, options, readyCallback)
+  * = Subkey.path(keyPath, options, readyCallback)
 * Subkey.subkey(keyPath, readyCallback)
+  * = Subkey.path(keyPath, readyCallback)
 
 
 * arguments:
@@ -240,10 +247,17 @@ Create(or get from a global cache) a new Subkey instance:
       which means it will bypass the global cache if it is true.
     * addRef: boolean, defalut is true. whether add a reference count to the key instance in the global cache.
       * only free when RefCount is less than zero.
-* readyCallback: 
+* readyCallback: triggered when loading finished.
   * function readyCallback(err, theKey)
     * theKey may be set even though the error occur
 * return: the Subkey instance
+
+
+The usages:
+
+* Isolate the key like data tables, see also [level-sublevel](https://github.com/dominictarr/level-sublevel).
+* Key/Value ORM: Mapping the Key/Value to an Object.
+* Hierarchical Key/Value Storage
 
 ## Subkey.isAlias()
 
