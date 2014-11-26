@@ -121,6 +121,20 @@ you cannot run level-subkey on a database you created with level-sublevel
 * the valueEncoding and keyEncoding should not change on the same subkey.
 * you must escape the PATH_SEP for the first char(it as mark the redirection/alias key) if the valueEncoding is string(utf8)
 + Class property to get Subkey Class.
+* the Subkey instance lifecycle state manage.
+ * object state(_obj_state):
+   * initing: the object is initing.
+   * inited: the object is created.
+   * destroying: the object is destroying(before destroy).
+   * destroyed: the object is destroyed(after destroy). the destroyed event will be emitted.
+ * object loading state(_loading_state):
+   * unload: the object is not loaded from database.
+   * loading: the object is loading from database.
+   * loaded: the object has already been loaded from database.
+     * dirtied: the object has been modified, but not saved to database yet.
+     * modifying: the object has been modified to database, but not loaded to the object(affect the loading state to loading)
+     * modified: the object has been modified to database(not affect the loading state).
+     * deleted: the object has been deleted from database(affect the object state to destroyed).
 * async problem:
   * sync is very simple.
   * a = subkey("mykey") //the nut will cache this key.
@@ -129,7 +143,6 @@ you cannot run level-subkey on a database you created with level-sublevel
 
 ## todo
 
-* the Subkey instance life circle state manage.
 + index the integer and json object key on some subkey.
   * mechanism:1
     + customize precodec in subkey()'s options
@@ -153,9 +166,8 @@ The key is always string only unless it's an index.
 * Key
   * Key Path
   * alias
-* Key attributes
 * Value
-  * the value is json object format currently.
+  * get {asBuffer: false} can imporve performance for leveldown.
 
 
 ## Stability
@@ -225,6 +237,7 @@ Create(or get from a global cache) a new Subkey instance:
   * options: the options object is optional.
     * loadValue: boolean, defalut is true. whether load the value of the key after the key is created.
     * forceCreate: boolean, defalut is false. whether ignore the global cache always create a new Subkey instance.
+      which means it will bypass the global cache if it is true.
     * addRef: boolean, defalut is true. whether add a reference count to the key instance in the global cache.
       * only free when RefCount is less than zero.
 * readyCallback: 
