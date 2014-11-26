@@ -14,15 +14,42 @@ inherits      = util.inherits
 #   and returns the new reference count.
 
 
+# the object state constants:
+OBJECT_STATES =
+  initing: 1
+  inited: 2
+  destroying: 0
+  destroyed: null
+
+
 module.exports = class InterfacedObject
   inherits InterfacedObject, EventEmitter
+  OBJECT_STATES: OBJECT_STATES
+  @.prototype.__defineGetter__ "objectState", ->
+    vState = @_objectState_
+    if not vState? then "destroyed" else ["destroying", "initing", "inited"][vState]
+  setObjectState: (value, emitted = true)->
+    @_objectState_ = OBJECT_STATES[value]
+    @emit value, @ if emitted
+    return
+  # abstract initialization method
+  init: ->
+  # abstract finalization method
+  final:->
+  chageObjectStateTo: (aState)->
   constructor: ->
+    @setObjectState "initing"
     @RefCount = 0
     @setMaxListeners(Infinity)
+    @init.apply @, arguments
+    @setObjectState "inited"
   addRef: ->
     ++@RefCount
   destroy: ->
-    @emit "destroy", @
+    @setObjectState "destroying"
+    @emit "destroying", @
+    @final()
+    @setObjectState "destroyed"
   release: ->
     result = --@RefCount
     @destroy() if result < 0
