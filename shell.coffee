@@ -42,6 +42,17 @@ inherits        = util.inherits
 
 version = require("./package.json").version
 
+OBJECT_STATES = InterfacedObject.prototype.OBJECT_STATES
+
+# the object loading state constants:
+LOADING_STATES =
+  unload    : null
+  loading   : 0
+  loaded    : 1
+  dirtied   : 2
+  modifying : 3
+  modified  : 4
+  deleted   : 5
 
 sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteStream = WriteStream) ->
   class Subkey
@@ -62,23 +73,32 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
       if @_realKey? then @_realKey._value else @_value
     @.prototype.__defineSetter__ "value", (aValue)->
       if @_realKey?
-        @_realKey._value = aValue
-      else
+        @_realKey.value = aValue
+      else if @_value isnt aValue
         @_value = aValue
+        @setLoadingState "dirtied", true, "value"
+    @.prototype.__defineGetter__ "loadingState", ->
+      vState = @_loadingState_
+      if not vState? then "unload" else ["loading", "loaded", "dirtied", "modifying", "modified", "deleted"][vState]
     @isAlias: nut.isAlias
+    LOADING_STATES: LOADING_STATES
     Class: Subkey
     _NUT: nut
     version: version
+    setLoadingState: (value, emitted = false, additional)->
+      @_loadingState_ = LOADING_STATES[value]
+      @emit value, @, additional if emitted
     isLoading: ->
-      @_loaded is false
+      @_loadingState_ is LOADING_STATES.loading
     isLoaded: ->
-      @_loaded is true
+      @_loadingState_ >= LOADING_STATES.loaded
     isUnload: ->
-      not @_loaded?
+      not @_loadingState_?
     isAlias: ->
       @_realKey?
     loadValue: (aCallback) ->
-      @_loaded = false
+      @setLoadingState "loading"
+      #@emit("loading")
       aCallback ||= ->
       that = @
       vOptions = @options
@@ -90,13 +110,13 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
               nut.createSubkey value, Subkey.bind(null, value), vOptions, (err, result)->
                 that._realKey = result
                 aCallback(err, that)
-                that._loaded = true
+                that.setLoadingState "loaded"
           else
             aCallback(null, that)
-            that._loaded = true
+            that.setLoadingState "loaded"
         else
           aCallback(err, that)
-          that._loaded = null
+          that.setLoadingState "unload"#, true, err
     load: (aReadyCallback)->
       if @isUnload() and nut.isOpen() is true
         vOptions = @options
@@ -104,7 +124,12 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
           @loadValue aReadyCallback
         else
           aReadyCallback(null, @) if aReadyCallback
-    init: (aReadyCallback)->
+    init: (aKeyPath, aOptions, aReadyCallback)->
+      @options = aOptions
+      aKeyPath = getPathArray(aKeyPath)
+      aKeyPath = if aKeyPath then path.normalizeArray(aKeyPath) else []
+      @_pathArray = aKeyPath
+      @self = @
       @methods = {}
       @unhooks = []
       @listeners =
@@ -114,10 +139,9 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
         error: @emit.bind(@, "error")
       for event, listener of @listeners
         nut.on event, listener 
-      @_loaded = null # null means not loaded, true means loaded, false means loading
-      vOptions = @options
-      that = @
+      @setLoadingState "unload"
       @load(aReadyCallback)
+      that = @
       @on "ready", ->
         that.load(aReadyCallback)
       @post @path(), (op, add)->
@@ -125,6 +149,7 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
           when "del"
             #TODO: it need delete all subkeys?
             # state?
+            that.setLoadingState "deleted", true
             that._value = undefined
             if that._realKey
               that._realKey.free()
@@ -136,10 +161,15 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
               if that._realKey
                 that._realKey.free()
                 that._realKey = undefined
-              if vOptions and vOptions.valueEncoding is "json" and Subkey.isAlias(vValue)
+              if aOptions and aOptions.valueEncoding is "json" and Subkey.isAlias(vValue)
+                that._loadingState_ = LOADING_STATES.loading
+                that.setLoadingState "loading"
                 nut.get vValue, [], that.mergeOpts({getRealKey: true}), (err, value)->
-                  that._realKey = nut.createSubkey(value, Subkey.bind(null, value), vOptions)
+                  that._realKey = nut.createSubkey value, Subkey.bind(null, value), aOptions, (err, result) ->
+                    that.setLoadingState "loaded"
     final: ->
+      @freeSubkeys()
+      @_value = undefined
       if @_realKey
         @_realKey.free()
         @_realKey = undefined
@@ -153,7 +183,6 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
       @unhooks = []
       for event, listener of @listeners
         nut.removeListener event, listener
-      @freeSubkeys()
     constructor: (aKeyPath, aOptions, aCallback)->
       if isFunction aOptions
         aCallback = aOptions
@@ -163,14 +192,7 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
         vSubkey = nut.createSubkey(vKeyPath, Subkey.bind(null, vKeyPath), aOptions, aCallback)
         return vSubkey
 
-      super()
-      @options = aOptions
-      aKeyPath = getPathArray(aKeyPath)
-      aKeyPath = if aKeyPath then path.normalizeArray(aKeyPath) else []
-      @_pathArray = aKeyPath
-      @self = @
-
-      @init(aCallback)
+      super(aKeyPath, aOptions, aCallback)
     parent: ()->
       p = path.dirname @path()
       result = nut.subkey(p)
@@ -187,8 +209,8 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
         if vPath? and vPath isnt path.resolve(aPath)
           nut.delSubkey(vPath)
           @final()
-          @_pathArray = aPath
-          @init(aCallback)
+          #@_pathArray = aPath
+          @init(aPath, @options, aCallback)
           return true
       false
     _addHook: (key, callback, hooksAdd) ->
@@ -242,9 +264,6 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
       for k of vSubkeys
         vSubkeys[k].free()
       return
-    destroy: ->
-      super
-      @final()
     _doOperation: (aOperation, opts, cb) ->
       return @_realKey._doOperation.apply(@_realKey, arguments) if @_realKey
       if isFunction opts
