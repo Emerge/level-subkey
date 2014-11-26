@@ -200,7 +200,7 @@ exports = module.exports = function (db, precodec, codec) {
           } else {
               result = new aNewSubkeyProc(options, callback)
               _subkeys[vKeyPath] = result
-              result.on("destroy", function(item){
+              result.on("destroyed", function(item){
                 delete _subkeys[vKeyPath]
               })
           }
