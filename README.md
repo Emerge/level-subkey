@@ -166,13 +166,16 @@ you cannot run level-subkey on a database you created with level-sublevel
 The key is always string only unless it's an index.
 
 * Key
-  * Key Path
+  * Key Path: like hierarchical file path.
+  * Subkey: a key can have a lot of subkeys.
   * alias
 * Value
   * can not be undefined, it used as deleted.
   * can be null.
   * get {asBuffer: false} can improve performance for leveldown.
-
+* Attributes(V9)
+  * the key has many attributes(not a lot)
+  * the value is a special attribute too.
 
 ## Stability
 
@@ -228,7 +231,7 @@ db.put("/stuff/animal/pig/.ear/.type", value, function(err){})
 
 ## API
 
-### Subkey.subkey()
+### Subkey.subkey()/path(keyPath)
 
 Create(or get from a global cache) a new Subkey instance,
 and load the value if this key is exists on the database
@@ -239,33 +242,56 @@ and load the value if this key is exists on the database
   * = Subkey.path(keyPath, readyCallback)
 
 
-* arguments:
-  * keyPath: the key path can be a relative or absolute path.
-  * options: the options object is optional.
-    * loadValue: boolean, defalut is true. whether load the value of the key after the key is created.
-    * forceCreate: boolean, defalut is false. whether ignore the global cache always create a new Subkey instance.
-      which means it will bypass the global cache if it is true.
-    * addRef: boolean, defalut is true. whether add a reference count to the key instance in the global cache.
-      * only free when RefCount is less than zero.
+__arguments__
+
+* keyPath: the key path can be a relative or absolute path.
+* options: the options object is optional.
+  * loadValue: boolean, defalut is true. whether load the value of the key after the key is created.
+  * forceCreate: boolean, defalut is false. whether ignore the global cache always create a new Subkey instance.
+    which means it will bypass the global cache if it is true.
+  * addRef: boolean, defalut is true. whether add a reference count to the key instance in the global cache.
+    * only free when RefCount is less than zero.
 * readyCallback: triggered when loading finished.
   * function readyCallback(err, theKey)
     * theKey may be set even though the error occur
-* return: the Subkey instance
+
+__return__
+
+* object: the Subkey instance object
 
 
 The usages:
 
 * Isolate the key like data tables, see also [level-sublevel](https://github.com/dominictarr/level-sublevel).
-* Key/Value ORM: Mapping the Key/Value to an Object.
+* Key/Value ORM: Mapping the Key/Value to an Object with subkeys supports.
 * Hierarchical Key/Value Storage
+
+
+## Subkey.fullName/path()
+
+* Subkey.fullName
+* Subkey.path()
+
+__arguments__
+
+* None
+
+__return__
+
+* String: return the subkey's full path.
 
 ## Subkey.isAlias()
 
 Get the subkey itself whether is an alias or not.
 
-* arguments
-  * none
-* return: boolean
+__arguments__
+
+* none
+
+__return__
+
+* return: boolean, the subkey itself whether is an alias or not.
+
 
 ## Subkey.alias()
 
@@ -277,16 +303,124 @@ Create an alias for itself:
 
 * Subkey.alias(alias, callback)
  
-* arguments:
-  * keyPath: the key path can be a relative or absolute path.
-  * alias: the created alias key path.
+__arguments__
+
+* keyPath: the key path can be a relative or absolute path.
+* alias: the created alias key path.
 * callback: 
   * function callback(err)
+
+__return__
+
 * return: undefined
 
 
+## Subkey.readStream/createReadStream([options])
 
-## Example
+create a read stream to visit the child subkeys of this subkey.
+
+* Subkey.readStream()
+* Subkey.readStream(options)
+
+__arguments__
+
+* options: this options object is optional argument.
+  * subkey's options
+    * `'path'` *(string|Subkey Object)*: can be relative or absolute key path or another subkey object to search
+    * `'next'`: the raw key data to ensure the readStream/pathStream return keys is greater than the key. See `'last'` event.
+      * note: this will affect the gt/gte or lt/lte(reverse) options.
+    * `'separator'` *(char)*
+    * `'filter'` *(function)*: to filter data in the stream
+      * function filter(key, value) if return:
+        *  0(nut.FILTER_INCLUDED): include this item
+        *  1(nut.FILTER_EXCLUDED): exclude
+        * -1(nut.FILTER_STOPPED): stop stream.
+      * note: the filter function argument 'key' and 'value' may be null, it is affected via keys and values of this options.
+    * `'bounded'` *(boolean, default: `true`)*: whether limit the boundary to this subkey only.
+      * through that can limit all keys are the subkey's children. So DONT disable it unless you know why.
+    * `'separatorRaw'` *(boolean, default: `false`)*: do not convert the separator, use the separator directly if true.
+      * see also: 'Internal Storage Format for Key'
+      * in fact the pathStream is set the options to {separator:'/', separatorRaw: true, start:'0'} simply.
+  * levelup's options
+    *  'lt', 'lte', 'gt', 'gte', 'start', 'end', 'reverse' options to control the range of keys that are streamed 
+      * see [Levelup](https://github.com/rvagg/node-levelup#createReadStream)
+    * `'keys'` *(boolean, default: `true`)*: whether the `'data'` event should contain keys. If set to `true` and `'values'` set to `false` then `'data'` events will simply be keys, rather than objects with a `'key'` property. Used internally by the `createKeyStream()` method.
+    * `'values'` *(boolean, default: `true`)*: whether the `'data'` event should contain values. If set to `true` and `'keys'` set to `false` then `'data'` events will simply be values, rather than objects with a `'value'` property. Used internally by the `createValueStream()` method.
+    * `'limit'` *(number, default: `-1`)*: limit the number of results collected by this stream. This number represents a *maximum* number of results and may not be reached if you get to the end of the data first. A value of `-1` means there is no limit. When `reverse=true` the highest keys will be returned instead of the lowest keys.
+    * `'fillCache'` *(boolean, default: `false`)*: wheather LevelDB's LRU-cache should be filled with data read.
+
+__return__
+
+* object: the read stream object
+
+
+the standard `'data'`, '`error'`, `'end'` and `'close'` events are emitted.
+the `'last'` event will be emitted when the last data arrived, the argument is the last raw key(no decoded).
+if no more data the last key is `undefined`.
+
+
+### Examples
+
+
+filter usage:
+
+```js
+db.createReadStream({filter: function(key, value){
+    if (/^hit/.test(key))
+        return db.FILTER_INCLUDED
+    else key == 'endStream'
+        return db.FILTER_STOPPED
+    else
+        return db.FILTER_EXCLUDED
+}})
+  .on('data', function (data) {
+    console.log(data.key, '=', data.value)
+  })
+  .on('error', function (err) {
+    console.log('Oh my!', err)
+  })
+  .on('close', function () {
+    console.log('Stream closed')
+  })
+  .on('end', function () {
+    console.log('Stream closed')
+  })
+```
+
+next and last usage for paged data demo:
+
+``` js
+
+var callbackStream = require('callback-stream')
+
+nextPage(db, aLastKey, aPageSize, cb) {
+  var stream = db.readStream({next: aLastKey, limit: aPageSize})
+  var lastKey;
+  stream.on('last', function(aLastKey){
+    lastKey = aLastKey;
+  });
+
+  stream.pipe(callbackStream(function(err, data){
+    cb(data, lastKey)
+  }))
+
+}
+
+var pageNo = 1;
+dataCallback = function(data, lastKey) {
+    console.log("page:", pageNo);
+    console.log(data);
+    ++pageNo;
+    if (lastKey) {
+      nextPage(db, lastKey, 10, dataCallback);
+    }
+    else
+      console.log("no more data");
+}
+nextPage(db, lastKey, 10, dataCallback);
+```
+
+## Examples
 
 
 ### Simple Section Usage
