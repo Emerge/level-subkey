@@ -334,7 +334,9 @@ exports = module.exports = function (db, precodec, codec) {
         encodePath(resolveKeyPath(aPath, key), opts),
         opts,
         function (err, value) {
-          if(err) cb(err)
+          if(err) {
+            cb(err);
+          }
           else {
             var vOpts = opts || options
             if (vOpts.getRealKey === true && vOpts.allowRedirect == null)

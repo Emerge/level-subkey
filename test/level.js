@@ -4,12 +4,12 @@ var path = require('path')
 
 //the mock is partical levelup api.
 var mock  = require('./mock')
-var nut   = require('../nut')
-var shell = require('../shell') //the shell surrounds the nut
+var nut   = require('../lib/DBCore')
+var shell = require('../lib/Subkey') //the shell surrounds the nut
 var codec = require('levelup/lib/codec')
-var concat = require('../codec')
-var legacy = require('../codec/legacy')
-var bytewise = require('../codec/bytewise')
+var concat = require('../lib/codec')
+var legacy = require('../lib/codec/legacy')
+var bytewise = require('../lib/codec/bytewise')
 
 
 var codex = [

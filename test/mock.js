@@ -1,7 +1,7 @@
 var EventEmitter = require('events').EventEmitter
-var range = require('../range')
+var range = require('../lib/range')
 var pull = require('pull-stream')
-var compare = require('../range').compare
+var compare = require('../lib/range').compare
 
 var next = 'undefined' === typeof setImmediate ? setTimeout : setImmediate
 

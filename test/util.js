@@ -1,6 +1,6 @@
 var test = require('tape')
 
-var util = require('../util')
+var util = require('../lib/util')
 
 var Root = function(){};
 Root.prototype.className = "Root";

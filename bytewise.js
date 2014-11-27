@@ -1,11 +1,11 @@
-var nut   = require('./nut')
-var shell = require('./shell') //the shell surrounds the nut
+var nut   = require('./lib/DBCore')
+var shell = require('./lib/Subkey') //the shell surrounds the nut
 var codec = require('levelup/lib/codec')
 var merge = require('xtend')
 
 var ReadStream = require('levelup/lib/read-stream')
 
-var precodec = require('./codec/bytewise')
+var precodec = require('./lib/codec/bytewise')
 
 function id (e) {
   return e

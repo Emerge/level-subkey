@@ -1,4 +1,4 @@
-var path = require('../path')
+var path = require('../lib/path')
 var levelup = require('level-test')()
 
 var base = require('../')(levelup('test-sublevels'))

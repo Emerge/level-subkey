@@ -3,7 +3,7 @@ util          = require("./util")
 path          = require("./path")
 through       = require("through")
 addpre        = require("./range").addPrefix
-_nut          = require("./nut")
+_nut          = require("./DBCore")
 errors        = require("./errors")
 levelUtil     = require("levelup/lib/util")
 WriteStream   = require("levelup/lib/write-stream")
@@ -40,7 +40,7 @@ isString        = util.isString
 isObject        = util.isObject
 inherits        = util.inherits
 
-version = require("./package.json").version
+version = require("../package.json").version
 
 OBJECT_STATES = InterfacedObject.prototype.OBJECT_STATES
 
