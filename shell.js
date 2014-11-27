@@ -165,6 +165,12 @@
 
       Subkey.isAlias = nut.isAlias;
 
+      Subkey.prototype.FILTER_INCLUDED = FILTER_INCLUDED;
+
+      Subkey.prototype.FILTER_EXCLUDED = FILTER_EXCLUDED;
+
+      Subkey.prototype.FILTER_STOPPED = FILTER_STOPPED;
+
       Subkey.prototype.LOADING_STATES = LOADING_STATES;
 
       Subkey.prototype.Class = Subkey;

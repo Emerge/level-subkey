@@ -87,6 +87,9 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
       vState = @_loadingState_
       if not vState? then "unload" else ["loading", "loaded", "dirtied", "modifying", "modified", "deleted"][vState]
     @isAlias: nut.isAlias
+    FILTER_INCLUDED: FILTER_INCLUDED
+    FILTER_EXCLUDED: FILTER_EXCLUDED
+    FILTER_STOPPED: FILTER_STOPPED
     LOADING_STATES: LOADING_STATES
     Class: Subkey
     _NUT: nut
