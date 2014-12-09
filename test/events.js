@@ -1,13 +1,15 @@
-var level = require('level-test')()
+var level = require('level-test-sync')()
 var sublevel = require('../')
 var tape = require('tape')
 
 require('rimraf').sync('/tmp/test-sublevel-events')
 
+function noop() {}
+
 tape('sublevel-events-on-ready', function (t) {
 
 
-  var db = level('test-sublevel-events')
+  var db = level('test-sublevel-events', {}, noop)
   var base = sublevel(db)
   var ready = false
   base.once("ready", function(){

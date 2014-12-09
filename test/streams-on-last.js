@@ -1,4 +1,4 @@
-var level = require('level-test')()
+var level = require('level-test-sync')()
 var path  = require("path")
 var sublevel = require('../')
 var precodec = require('../lib/codec')
@@ -104,6 +104,7 @@ tape('Stream-write', function (t) {
       throw err
   })
   stream.on('close', function(){
+    console.log("writeStream close")
     all(db, {}, function (err, obj) {
       if(err) throw err
       t.deepEqual(obj, expectedResults)

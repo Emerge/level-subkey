@@ -1,5 +1,5 @@
 var test = require('tape')
-var level = require('level-test')()
+var level = require('level-test-sync')()
 var base = require('../')(level('test-sublevel-reverse'))
 
 function all (db, range, cb) {

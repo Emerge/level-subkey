@@ -1,4 +1,4 @@
-var level = require('level-test')()
+var level = require('level-test-sync')()
 var path  = require("path")
 var sublevel = require('../')
 var precodec = require('../lib/codec')

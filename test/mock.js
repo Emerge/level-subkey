@@ -28,7 +28,7 @@ function get (ary, _, key) {
 
 module.exports = function () {
   if(process.env.FOR_REAL) {
-    var db = require('level-test')()('test-level-sublevel_' + I++)
+    var db = require('level-test-sync')()('test-level-sublevel_' + I++)
     return db
   }
 

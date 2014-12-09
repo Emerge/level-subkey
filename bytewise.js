@@ -1,9 +1,9 @@
 var nut   = require('./lib/DBCore')
 var shell = require('./lib/Subkey') //the shell surrounds the nut
-var codec = require('levelup/lib/codec')
+var codec = require('levelup-sync/lib/codec')
 var merge = require('xtend')
 
-var ReadStream = require('levelup/lib/read-stream')
+var ReadStream = require('levelup-sync/lib/read-stream')
 
 var precodec = require('./lib/codec/bytewise')
 

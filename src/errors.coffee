@@ -1,6 +1,6 @@
 extend      = require("xtend")
 createError = require("errno").create
-LevelErrors = require("levelup/lib/errors")
+LevelErrors = require("levelup-sync/lib/errors")
 
 LevelUPError = LevelErrors.LevelUPError
 

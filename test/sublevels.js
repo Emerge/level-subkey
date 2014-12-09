@@ -1,5 +1,5 @@
 var path = require('../lib/path')
-var levelup = require('level-test')()
+var levelup = require('level-test-sync')()
 
 var base = require('../')(levelup('test-sublevels'))
 

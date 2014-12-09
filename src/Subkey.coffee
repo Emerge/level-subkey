@@ -5,9 +5,9 @@ through       = require("through")
 addpre        = require("./range").addPrefix
 _nut          = require("./DBCore")
 errors        = require("./errors")
-levelUtil     = require("levelup/lib/util")
-WriteStream   = require("levelup/lib/write-stream")
-ReadStream    = require('levelup/lib/read-stream')
+levelUtil     = require("levelup-sync/lib/util")
+WriteStream   = require("levelup-sync/lib/write-stream")
+ReadStream    = require('levelup-sync/lib/read-stream')
 InterfacedObject = require("./InterfacedObject")
 
 ReadError     = errors.ReadError

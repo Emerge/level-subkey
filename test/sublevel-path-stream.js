@@ -1,4 +1,4 @@
-var level = require('level-test')()
+var level = require('level-test-sync')()
 var sublevel = require('../')
 
 require('tape')('sublevel-path-stream', function (t) {

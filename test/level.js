@@ -6,7 +6,7 @@ var path = require('path')
 var mock  = require('./mock')
 var nut   = require('../lib/DBCore')
 var shell = require('../lib/Subkey') //the shell surrounds the nut
-var codec = require('levelup/lib/codec')
+var codec = require('levelup-sync/lib/codec')
 var concat = require('../lib/codec')
 var legacy = require('../lib/codec/legacy')
 var bytewise = require('../lib/codec/bytewise')
@@ -189,7 +189,7 @@ var tests = [
   stream
 ]
 
-var LevelDown = require('leveldown')
+var LevelDown = require('leveldown-sync')
 var i = 0
 var rimraf = require('rimraf')
 
