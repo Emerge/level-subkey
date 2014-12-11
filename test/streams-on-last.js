@@ -1,9 +1,9 @@
-var level = require('level-test')()
+var level = require('level-test-sync')()
 var path  = require("path")
 var sublevel = require('../')
-var precodec = require('../codec')
+var precodec = require('../lib/codec')
 
-var _nut = require('../nut')
+var _nut = require('../lib/DBCore')
 var tape = require('tape')
 
 var FILTER_EXCLUDED = _nut.FILTER_EXCLUDED
@@ -104,6 +104,7 @@ tape('Stream-write', function (t) {
       throw err
   })
   stream.on('close', function(){
+    console.log("writeStream close")
     all(db, {}, function (err, obj) {
       if(err) throw err
       t.deepEqual(obj, expectedResults)

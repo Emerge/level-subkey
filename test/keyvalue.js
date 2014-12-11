@@ -1,6 +1,6 @@
 var test = require('tape')
 var SubLevel = require('../')
-var levelup = require('level-test')()
+var levelup = require('level-test-sync')()
 
 var base = SubLevel(levelup('test-sublevel'))
 

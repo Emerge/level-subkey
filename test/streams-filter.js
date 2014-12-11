@@ -1,6 +1,6 @@
-var level = require('level-test')()
+var level = require('level-test-sync')()
 var sublevel = require('../')
-var _nut = require('../nut')
+var _nut = require('../lib/DBCore')
 var FILTER_EXCLUDED = _nut.FILTER_EXCLUDED
 var FILTER_STOPPED = _nut.FILTER_STOPPED
 

@@ -12,6 +12,7 @@ module.exports = {
     var j = k.pop()
     return [k, j]
   },
+  buffer: false,
   lowerBound: '\x00',
   upperBound: '\xff'
 }

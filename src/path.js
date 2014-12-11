@@ -21,47 +21,11 @@
 
 
 //var isWindows = process.platform === 'win32';
-//var util = require('util');
+var util = require('./util');
 
-var SEP = require("./codec");
+var SEP = require("./codec/separator");
 //var PATH_SEP = SEP.PATH_SEP
 
-function objectToString(o) {
-  return Object.prototype.toString.call(o);
-}
-
-var isArray = Array.isArray;
-
-function isBoolean(arg) {
-  return typeof arg === 'boolean';
-}
-
-function isNullOrUndefined(arg) {
-  return arg == null;
-}
-function isString(arg) {
-  return typeof arg === 'string';
-}
-
-function isNumber(arg) {
-  return typeof arg === 'number';
-}
-
-function isUndefined(arg) {
-  return arg === void 0;
-}
-
-function isObject(arg) {
-  return typeof arg === 'object' && arg !== null;
-}
-
-function isFunction(arg) {
-  return typeof arg === 'function';
-}
-
-function isDate(d) {
-  return isObject(d) && objectToString(d) === '[object Date]';
-}
 // resolves . and .. elements in a path array with directory names there
 // must be no slashes, empty elements, or device names (c:\) in the array
 // (so also no leading and trailing slashes - it does not distinguish
@@ -70,7 +34,7 @@ function isDate(d) {
 function normalizeArray(parts, allowAboveRoot) {
   // if the path tries to go above the root, `up` ends up > 0
   var up = 0;
-  if (isNullOrUndefined(allowAboveRoot)) {
+  if (util.isNullOrUndefined(allowAboveRoot)) {
       switch (parts[0]) {
         case '.':
             allowAboveRoot = true;
@@ -130,7 +94,7 @@ exports.normalizeArray = normalizeArray;
       var path = (i >= 0) ? arguments[i] : ".";
 
       // Skip empty and invalid entries
-      if (isArray(path)) {
+      if (util.isArray(path)) {
           if (path.length === 0) {
             //treat empty array as root path
             resolvedAbsolute = true;
@@ -139,7 +103,7 @@ exports.normalizeArray = normalizeArray;
             resolvedAbsolute = path[0] === "" || path[0] !== '.'
           }
           continue;
-      } else if (!isString(path)) {
+      } else if (!util.isString(path)) {
         throw new TypeError('Arguments to path.resolve must be strings');
       } else if (!path) {
         continue;
@@ -209,7 +173,7 @@ exports.normalizeArray = normalizeArray;
     for (var i = 0; i < arguments.length; i++) {
       var segment = arguments[i];
       // Skip empty and invalid entries
-      if (isArray(segment)) {
+      if (util.isArray(segment)) {
           if (segment.length === 0 && path.length === 0) {
               path = vPathSep
           } else {
@@ -219,13 +183,13 @@ exports.normalizeArray = normalizeArray;
             }
           }
           continue;
-      } else if (!isString(segment)) {
+      } else if (!util.isString(segment)) {
         throw new TypeError('Arguments to path.resolve must be strings');
       } else if (!segment) {
         continue;
       }
 
-      if (!isString(segment)) {
+      if (!util.isString(segment)) {
         throw new TypeError('Arguments to path.join must be strings');
       }
       if (segment) {
@@ -296,7 +260,6 @@ exports.dirname = function(path) {
   var result = splitPath(path),
       root = result[0],
       dir = result[1];
-
   if (!root && !dir) {
     // No dirname whatsoever
     return '.';
@@ -306,14 +269,12 @@ exports.dirname = function(path) {
     // It has a dirname, strip trailing slash
     dir = dir.substr(0, dir.length - 1);
   }
-
   return root + dir;
 };
 
 
 exports.basename = function(path, ext) {
   var f = splitPath(path)[2];
-  // TODO: make this comparison case-insensitive on windows?
   if (ext && f.substr(-1 * ext.length) === ext) {
     f = f.substr(0, f.length - ext.length);
   }

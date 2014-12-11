@@ -4,12 +4,12 @@ var path = require('path')
 
 //the mock is partical levelup api.
 var mock  = require('./mock')
-var nut   = require('../nut')
-var shell = require('../shell') //the shell surrounds the nut
-var codec = require('levelup/lib/codec')
-var concat = require('../codec')
-var legacy = require('../codec/legacy')
-var bytewise = require('../codec/bytewise')
+var nut   = require('../lib/DBCore')
+var shell = require('../lib/Subkey') //the shell surrounds the nut
+var codec = require('levelup-sync/lib/codec')
+var concat = require('../lib/codec')
+var legacy = require('../lib/codec/legacy')
+var bytewise = require('../lib/codec/bytewise')
 
 
 var codex = [
@@ -23,7 +23,7 @@ var pullReadStream = require('../pull')
 function create (precodec, db) {
 
   //convert pull stream to iterators
-  return shell ( nut ( db || mock(), precodec, codec ), [], pullReadStream)
+  return shell ( nut ( db || mock(), precodec, codec ), pullReadStream)([])
 }
 
 function prehookPut (db) {
@@ -94,7 +94,6 @@ function createPostHooks (db) {
         next()
       })
   
-      console.log(db, args)
       db[method].apply(db, args.concat(function (err) {
         console.log('**************8')
         if(err) console.log(err.stack)
@@ -182,16 +181,15 @@ function stream (db) {
 
 
 var tests = [
-/*
+
   prehookPut,
   prehookBatch,
   createPostHooks,
   rmHook,
-  */
   stream
 ]
 
-var LevelDown = require('leveldown')
+var LevelDown = require('leveldown-sync')
 var i = 0
 var rimraf = require('rimraf')
 

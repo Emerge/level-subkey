@@ -1,7 +1,7 @@
 
 var tape = require('tape')
 
-var range = require('../range')
+var range = require('../lib/range')
 
 tape('test prefix', function (t) {
 

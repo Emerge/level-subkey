@@ -1,5 +1,5 @@
-var levelup = require('level-test')()
-var precodec = require('../codec')
+var levelup = require('level-test-sync')()
+var precodec = require('../lib/codec')
 
 var db = levelup('test-sublevel-path')
 var base = require('../')(db)
@@ -19,6 +19,7 @@ test('sublevel-path-get', function (t) {
 
 
   base.batch([
+    { key: 'bar', value: "HiBar", type: 'put', valueEncoding: 'json'},
     { key: 'a', value: 1, type: 'put', path: ['foo'] },
     { key: 'k', value: 2, type: 'put', path: '/foo' },
     { key: 'q', value: 3, type: 'put', path: "foo/a" },
@@ -28,28 +29,28 @@ test('sublevel-path-get', function (t) {
     { key: 'b', value: 5, type: 'put', path: '/'},
     { key: '.b', value: 6, type: 'put', path: "bar" },
   ], function (err) {
-    if (err) throw(err)
+    t.notOk(err, 'no error')
     bar.get("b", function(err, v){
-        if (err) throw(err)
+        t.notOk(err, 'no error')
         t.equal(v, '5')
         foo.get('k', function(err,v){
-          if (err) throw(err)
+          t.notOk(err, 'no error')
           t.equal(v, '2')
           foo.get('../bar/b', function(err,v){
-            if (err) throw(err)
+            t.notOk(err, 'no error')
             t.equal(v, '5')
 
             foo.get('a/q', function(err,v){
-                if (err) throw(err)
+                t.notOk(err, 'no error')
                 t.equal(v, '3')
                 foo.get('a', function(err,v){
-                    if (err) throw(err)
+                    t.notOk(err, 'no error')
                     t.equal(v, '1')
                     bar.get('.b', function(err,v){
-                      if (err) throw(err)
+                      t.notOk(err, 'no error')
                       t.equal(v, '6')
                       db.get('/bar/'+SEP11+'b', function(err,v){
-                          if (err) throw(err)
+                          t.notOk(err, 'no error')
                           t.equal(v, '6')
                           t.end()
                       })
@@ -73,7 +74,7 @@ test('sublevel-path-get-undefinedOpts', function (t) {
 
 test('sublevel-path-get-prefix', function (t) {
   base.get("b", {prefix: "bar"}, function(err, v){
-    if (err) throw(err)
+    t.notOk(err, 'no error')
     t.equal(v, '5')
     t.end()
   })
@@ -85,7 +86,7 @@ test('sublevel-path-setPath', function (t) {
   bar.setPath("../foo")
   t.equal(bar.path(), '/foo')
   bar.get("a", function(err, v){
-    if (err) throw(err)
+    t.notOk(err, 'no error')
     t.equal(v, '1')
     t.end()
   })
@@ -98,10 +99,236 @@ test('sublevel-path-setPathViaObject', function (t) {
   bar.setPath(foo)
   t.equal(bar.path(), '/foo')
   bar.get("a", function(err, v){
-    if (err) throw(err)
+    t.notOk(err, 'no error')
     t.equal(v, '1')
     t.end()
   })
 })
 
+test('sublevel-path-parent', function (t) {
+  var bar = base.subkey('bar')
+  var foo = base.subkey('foo')
+  var barA = bar.subkey('Axq')
+  var fooA1 = base.subkey('/foo/a/a3F2e/1')
+
+  t.notOk(bar.isAlias(), " should not be an alias")
+  t.notOk(barA.isAlias(), " should not be an alias")
+  t.notOk(foo.isAlias(), " should not be an alias")
+  t.notOk(fooA1.isAlias(), " should not be an alias")
+ 
+  t.equal(bar.path(), '/bar')
+  t.equal(bar.parent(), base, "bar's parent is root")
+  t.equal(barA.parent(), bar, "barA's parent is bar")
+  t.equal(fooA1.parent(), foo)
+  var fooa= base.subkey('/foo/a')
+  t.equal(fooA1.parent(), fooa)
+  t.end()
+})
+
+test('sublevel-get-alias', function (t) {
+  var bar = base.subkey('bar')
+  var foo = base.subkey('foo')
+ 
+  base.alias("/foo/a/q", "/bar/foo/alias/q", function(err) {
+    t.notOk(err, 'no error')
+    bar.get("foo/alias/q", {valueEncoding: 'json', allowRedirect:1},function(err, v){
+      t.notOk(err, 'no error')
+      t.strictEqual(v, 3)
+      t.end()
+    })
+  })
+})
+test('sublevel-get-alias2', function (t) {
+  var bar = base.subkey('bar')
+  var foo = base.subkey('foo')
+ 
+  bar.alias("/foo/bar", function(err) {
+    t.notOk(err, 'no error')
+    foo.get("bar", {valueEncoding: 'json', allowRedirect:1},function(err, v){
+      t.notOk(err, 'no error')
+      t.strictEqual(v, "HiBar")
+      t.end()
+    })
+  })
+})
+test('sublevel-get-alias3', function (t) {
+  var bar = base.subkey('bar')
+  var foo = base.subkey('foo')
+  var fooBar2 = base.subkey('foo/bar2')
+ 
+  bar.alias(fooBar2, function(err) {
+    t.notOk(err, 'no error')
+    foo.get("bar2", {valueEncoding: 'json', allowRedirect:1},function(err, v){
+      t.notOk(err, 'no error')
+      t.strictEqual(v, "HiBar")
+      t.end()
+    })
+  })
+})
+test('sublevel-get-alias4', function (t) {
+  var bar = base.subkey('bar')
+  var foo = base.subkey('foo')
+  var fooBar3 = base.subkey('foo/bar3')
+ 
+  base.alias(bar, fooBar3, function(err) {
+    t.notOk(err, 'no error')
+    foo.get("bar3", {valueEncoding: 'json', allowRedirect:1},function(err, v){
+      t.notOk(err, 'no error')
+      t.strictEqual(v, "HiBar")
+      t.end()
+    })
+  })
+})
+test('sublevel-get-alias-redirect', function (t) {
+  var bar = base.subkey('bar')
+  var foo = base.subkey('foo')
+  var fooBar3 = base.subkey('foo/bar3')
+ 
+  base.alias("/foo/a/q", bar, function(err) {
+    t.notOk(err, 'no error')
+    foo.get("bar3", {valueEncoding: 'json', allowRedirect:2},function(err, v){
+      t.notOk(err, 'no error')
+      t.strictEqual(v, 3)
+      t.end()
+    })
+  })
+})
+test('sublevel-get-alias-redirect1', function (t) {
+  var bar = base.subkey('bar')
+  var foo = base.subkey('foo')
+  var fooBar3 = base.subkey('foo/bar3')
+ 
+  base.alias("/foo/a/q", bar, function(err) {
+    t.notOk(err, 'no error')
+    foo.get("bar3", {valueEncoding: 'json', allowRedirect:1},function(err, v){
+      t.notOk(err, 'no error')
+      t.strictEqual(v, '/foo/a/q')
+      t.end()
+    })
+  })
+})
+
+test('sublevel-path-get-self', function (t) {
+  var bar = base.subkey('bar')
+  bar.get({valueEncoding: 'json'}, function(err, v){
+    t.notOk(err, 'no error')
+    t.equal(v, '/foo/a/q')
+    t.end()
+  })
+})
+test('sublevel-path-get-self2', function (t) {
+  var bar = base.subkey('bar')
+  bar.get(function(err, v){
+    t.notOk(err, 'no error')
+    t.equal(v, '/foo/a/q')
+    t.end()
+  })
+})
+test('sublevel-path-get-realKey', function (t) {
+  var fooBar3 = base.subkey('foo/bar3')
+  fooBar3.get({valueEncoding: 'json', getRealKey:true}, function(err, v){
+    t.notOk(err, 'no error')
+    t.equal(v, '/foo/a/q')
+    t.end()
+  })
+})
+
+test('sublevel-path-get-realKey-not-real', function (t) {
+  var foo = base.subkey('foo/a')
+  foo.get({valueEncoding: 'json', getRealKey:true}, function(err, v){
+    t.notOk(err, 'no error')
+    t.equal(v, '/foo/a')
+    t.end()
+  })
+})
+
+test('sublevel-path-get-realKey-not-found', function (t) {
+  var foo = base.subkey('foo')
+  foo.get({valueEncoding: 'json', getRealKey:true}, function(err, v){
+    t.ok(err, "should err")
+    t.ok(err.notFound, "should err.notFound")
+    t.end()
+  })
+})
+test('sublevel-path-get-realKey', function (t) {
+  var fooBar3 = base.subkey('foo/bar3')
+  fooBar3.get({valueEncoding: 'json', getRealKey:true}, function(err, v){
+    t.notOk(err, 'no error')
+    t.equal(v, '/foo/a/q')
+    t.end()
+  })
+})
+
+test('sublevel-path-loadValue', function (t) {
+  var fooaq= base.subkey('foo/a/q')
+  base.alias('/bar', '/foo/bar4', function(err) {
+    t.notOk(err, 'no error')
+    var fooBar4 = base.subkey('foo/bar4', {valueEncoding: 'json'}, function(err, result){
+      t.notOk(err, 'no error')
+      t.equal(result.path(), '/foo/bar4')
+      t.equal(result._value, '/bar')
+      t.strictEqual(result._realKey, fooaq, result.path()+ " should has realKey")
+      t.ok(result.isAlias(), " should be an alias")
+      t.equal(result.value, result._realKey.value)
+      t.equal(fooaq.RefCount, 1)
+      t.end()
+    })
+  })
+})
+test('sublevel-path-loadValueAgain', function (t) {
+  var fooaq= base.subkey('foo/a/q', {addRef:false})
+  var fooBar4 = base.subkey('foo/bar4', {valueEncoding: 'json'}, function(err, result){
+    t.notOk(err, 'no error')
+    t.equal(result.path(), '/foo/bar4')
+    t.equal(result._value, '/bar')
+    t.strictEqual(result._realKey, fooaq, "should has realKey")
+    t.ok(result.isAlias(), " should be an alias")
+    t.equal(result.value, result._realKey.value)
+    t.equal(fooaq.RefCount, 1)
+    t.end()
+  })
+})
+test('sublevel-path-put', function (t) {
+  var fooaq= base.subkey('foo/a/q', {addRef:false})
+  var fooBar4 = base.subkey('foo/bar4', {valueEncoding: 'json'}, function(err, result){
+    t.notOk(err, 'no error')
+    t.equal(result.path(), '/foo/bar4')
+    t.equal(result._value, '/bar')
+    t.strictEqual(result._realKey, fooaq, "should has realKey")
+    t.ok(result.isAlias(), " should be an alias")
+    t.equal(result.value, result._realKey.value)
+    t.equal(fooaq.RefCount, 1)
+    result.put(1234, function(err){
+      t.notOk(err, 'no error')
+      t.equal(result.value, 1234)
+      t.equal(result.value, result._realKey.value)
+      result.value = {hi:1234}
+      t.equal(result.value, result._realKey.value)
+      result.put(function(err){
+        t.notOk(err, 'no error')
+        t.deepEqual(result.value,  {hi:1234})
+        t.equal(result.value, result._realKey.value)
+        t.end()
+      })
+    })
+  })
+})
+test('sublevel-path-del-itself', function (t) {
+  var fooBar4 = base.subkey('foo/bar4', function(err, result){
+      console.log("try del:")
+      t.notOk(err, 'no error')
+      t.equal(result.path(), '/foo/bar4')
+      result.del(function(err){
+        console.log("del:", err)
+        t.notOk(err, 'no error')
+        base.get("foo/bar4", function(err, v){
+          t.ok(err, "should be an error")
+          t.ok(err.notFound, "should be notFound")
+          t.equal(result._realKey, undefined)
+          t.equal(result._value, undefined)
+          t.end()
+        })
+      })
+  })
+})
 
