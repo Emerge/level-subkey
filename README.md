@@ -38,9 +38,9 @@ you cannot run level-subkey on a database you created with level-sublevel
   + add the sublevels property getter and setter to keep compatibility.
 + can filter in the stream.
   * options.filter = function(key, value) return
-    *  0(nut.FILTER_INCLUDED): include this item
-    *  1(nut.FILTER_EXCLUDED): exclude
-    * -1(nut.FILTER_STOPPED): stop stream.
+    *  0(subkey.FILTER_INCLUDED): include this item
+    *  1(subkey.FILTER_EXCLUDED): exclude
+    * -1(subkey.FILTER_STOPPED): stop stream.
   * note: the filter parameters key and value may be null, it is affected via keys and values of options.
 + supports subkey uses other separators, and you can change the default keys separator
   * the '%' can not be used as separator, it is the escape char.
@@ -48,14 +48,6 @@ you cannot run level-subkey on a database you created with level-sublevel
   * the others can have the subkeys too:
     * '/path/key/.attribute/#subkey'
     * optimalize performance for searching, use the new SUBKEY_SEPS design.
-  * usage:
-
-        var precodec = require('sublevel/codec')
-        precodec.SUBKEY_SEPS = ["/|-", "#.+"] //the first char is the default subkey separator, others are customize separator. 
-        subkey.put("some", "value", {separator: '|'})
-        //list all key/value on separator "|"
-        subkey.createReadStream({separator: '.'})
-        //it will return all prefixed "|" keys: {key: "|abc", value:....}
 + createWriteStream supports
   * Note: the writeStream do not support the options.path, options.separator parameters.
 * [bug] fixed the hooks may be memory leak when free sublevel.
@@ -195,7 +187,7 @@ The internal key path storage like file path, but the path separator can be cust
 * customize usage:
 
 ``` js
-    var precodec = require('sublevel/codec')
+    var precodec = require('level-subkey/lib/codec')
     precodec.SUBKEY_SEPS = ["/|-", "#.+"] //the first char is the default subkey separator, others are customize separator. 
     subkey.put("some", "value", {separator: '|'})
     //list all key/value on separator "|"
@@ -331,9 +323,9 @@ __arguments__
     * `'separator'` *(char)*
     * `'filter'` *(function)*: to filter data in the stream
       * function filter(key, value) if return:
-        *  0(nut.FILTER_INCLUDED): include this item
-        *  1(nut.FILTER_EXCLUDED): exclude
-        * -1(nut.FILTER_STOPPED): stop stream.
+        *  0(subkey.FILTER_INCLUDED): include this item
+        *  1(subkey.FILTER_EXCLUDED): exclude
+        * -1(subkey.FILTER_STOPPED): stop stream.
       * note: the filter function argument 'key' and 'value' may be null, it is affected via keys and values of this options.
     * `'bounded'` *(boolean, default: `true`)*: whether limit the boundary to this subkey only.
       * through that can limit all keys are the subkey's children. So DONT disable it unless you know why.
