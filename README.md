@@ -7,17 +7,16 @@ these sublevels are called dynamic subkey.
 
 [![build status](https://secure.travis-ci.org/snowyu/level-subkey.png)](https://travis-ci.org/snowyu/level-subkey)
 
-[![testling badge](https://ci.testling.com/snowyu/level-subkey.png)](https://ci.testling.com/snowyu/level-subkey)
 
 This module allows you to create a hierarchy data store with
-[levelup](https://github.com/rvagg/node-levelup) database,
+[levelup-sync](https://github.com/snowyu/node-levelup-sync) database,
 kinda like tables in an sql database, but hierarchical, evented, and ranged,
 for real-time changing data.
 
 ## Main Features different from level-sublevel
 
 * dynamic sublevels via key path
-* the keys are _encoded_ has changed, and _this means
+* the keys are _encoded_ has changed, and _this_ means
 you cannot run level-subkey on a database you created with level-sublevel
 * hierarchy data store like path now.
 * rename options.prefix to options.path
