@@ -23,7 +23,7 @@
 //var isWindows = process.platform === 'win32';
 var util = require('./util');
 
-var SEP = require("./codec");
+var SEP = require("./codec/separator");
 //var PATH_SEP = SEP.PATH_SEP
 
 // resolves . and .. elements in a path array with directory names there
@@ -260,7 +260,6 @@ exports.dirname = function(path) {
   var result = splitPath(path),
       root = result[0],
       dir = result[1];
-
   if (!root && !dir) {
     // No dirname whatsoever
     return '.';
@@ -270,7 +269,6 @@ exports.dirname = function(path) {
     // It has a dirname, strip trailing slash
     dir = dir.substr(0, dir.length - 1);
   }
-
   return root + dir;
 };
 

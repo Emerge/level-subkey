@@ -3,7 +3,7 @@ var pl   = require('pull-level')
 var pull = require('pull-stream')
 var toPull = require('stream-to-pull-stream')
 
-var level = require('level-test')()
+var level = require('level-test-sync')()
 var sublevel = require('../')
 var tape = require('tape')
 

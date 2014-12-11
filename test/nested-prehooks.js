@@ -1,4 +1,4 @@
-var level = require('level-test')()
+var level = require('level-test-sync')()
 var Sublevel = require('../')
 
 function sl (name) {

@@ -1,11 +1,11 @@
-var nut   = require('./nut')
-var shell = require('./shell') //the shell surrounds the nut
-var codec = require('levelup/lib/codec')
+var nut   = require('./lib/DBCore')
+var shell = require('./lib/Subkey') //the shell surrounds the nut
+var codec = require('levelup-sync/lib/codec')
 var merge = require('xtend')
 
-var ReadStream = require('levelup/lib/read-stream')
+var ReadStream = require('levelup-sync/lib/read-stream')
 
-var precodec = require('./codec/bytewise')
+var precodec = require('./lib/codec/bytewise')
 
 function id (e) {
   return e
@@ -21,7 +21,7 @@ module.exports = function (db, opts) {
     }
   }, opts)
 
-  return shell ( nut ( db, precodec, codec ), [], ReadStream, opts)
+  return shell (nut(db, precodec, codec), ReadStream)([], opts)
 
 }
 

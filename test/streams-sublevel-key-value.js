@@ -1,4 +1,4 @@
-var levelup = require('level-test')()
+var levelup = require('level-test-sync')()
 
 var base = require('../')(levelup('test-streams-sublevel-key-value'))
 

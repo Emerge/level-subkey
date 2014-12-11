@@ -1,7 +1,7 @@
 var tape = require('tape')
 
 var sublevel = require('../')
-var level = require('level-test')()
+var level = require('level-test-sync')()
 
 tape('expose version', function (t) {
 
