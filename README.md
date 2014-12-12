@@ -384,9 +384,10 @@ next and last usage for paged data demo:
 
 var callbackStream = require('callback-stream')
 
-nextPage(db, aLastKey, aPageSize, cb) {
+var lastKey = null;
+
+function nextPage(db, aLastKey, aPageSize, cb) {
   var stream = db.readStream({next: aLastKey, limit: aPageSize})
-  var lastKey;
   stream.on('last', function(aLastKey){
     lastKey = aLastKey;
   });
