@@ -7,6 +7,7 @@ these sublevels are called dynamic subkey.
 
 [![build status](https://secure.travis-ci.org/snowyu/level-subkey.png)](https://travis-ci.org/snowyu/level-subkey)
 
+[![NPM](https://nodei.co/npm/level-subkey.png?stars&downloads&downloadRank)](https://nodei.co/npm/level-subkey/) [![NPM](https://nodei.co/npm-dl/level-subkey.png?months=6&height=3)](https://nodei.co/npm/level-subkey/)
 
 This module allows you to create a hierarchy data store with
 [levelup-sync](https://github.com/snowyu/node-levelup-sync) database,

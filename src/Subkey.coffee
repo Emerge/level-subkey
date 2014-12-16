@@ -1,5 +1,5 @@
 precodec      = require("./codec")
-util          = require("./util")
+util          = require("abstract-object/lib/util")
 path          = require("./path")
 through       = require("through")
 addpre        = require("./range").addPrefix
@@ -8,7 +8,7 @@ errors        = require("./errors")
 levelUtil     = require("levelup-sync/lib/util")
 WriteStream   = require("levelup-sync/lib/write-stream")
 ReadStream    = require('levelup-sync/lib/read-stream')
-InterfacedObject = require("./InterfacedObject")
+RefObject     = require("abstract-object/RefObject")
 
 ReadError     = errors.ReadError
 NotFoundError = errors.NotFoundError
@@ -42,7 +42,7 @@ inherits        = util.inherits
 
 version = require("../package.json").version
 
-OBJECT_STATES = InterfacedObject.prototype.OBJECT_STATES
+OBJECT_STATES = RefObject.prototype.OBJECT_STATES
 
 # the object loading state constants:
 LOADING_STATES =
@@ -56,7 +56,7 @@ LOADING_STATES =
 
 sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteStream = WriteStream) ->
   class Subkey
-    inherits(Subkey, InterfacedObject)
+    inherits(Subkey, RefObject)
     @.prototype.__defineGetter__ "sublevels", ->
       deprecate "sublevels, all subkeys(sublevels) have cached on nut now."
       r = nut.subkeys(path.join(@_pathArray, "*"))
@@ -134,6 +134,7 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
         else
           aReadyCallback(null, @) if aReadyCallback
     init: (aKeyPath, aOptions, aReadyCallback)->
+      super()
       @options = aOptions
       aKeyPath = getPathArray(aKeyPath)
       aKeyPath = if aKeyPath then path.normalizeArray(aKeyPath) else []
