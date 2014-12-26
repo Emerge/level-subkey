@@ -6,8 +6,8 @@ var precodec = require('./lib/codec')
 var codec = require('levelup-sync/lib/codec')
 var merge = require('xtend')
 
-var ReadStream  = require('levelup-sync/lib/read-stream')
-var WriteStream = require("levelup-sync/lib/write-stream")
+var ReadStream  = require('nosql-stream/lib/read-stream')
+var WriteStream = require("nosql-stream/lib/write-stream")
 
 module.exports = function (db, opts) {
   opts = merge(db.options, opts)

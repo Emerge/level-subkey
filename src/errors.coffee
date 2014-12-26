@@ -1,19 +1,12 @@
-extend      = require("xtend")
-createError = require("errno").create
-LevelErrors = require("levelup-sync/lib/errors")
+util        = require("abstract-object/lib/util")
+inherits    = util.inherits
+Errors      = require("abstract-object/Error")
+createError = Errors.createError
 
-LevelUPError = LevelErrors.LevelUPError
+Errors.SubkeyError   = SubkeyError = createError('Subkey', 299)
+Errors.RedirectError = RedirectError = createError("Redirect", 300, SubkeyError)
+Errors.RedirectExceedError = createError("RedirectExceed", 301, RedirectError)
 
-SubkeyError = createError("LevelSubkeyError", LevelUPError)
-RedirectError = createError("RedirectError", SubkeyError)
-RedirectExceedError = createError("RedirectExceedError", RedirectError)
-RedirectError::redirect = true
-RedirectError::status = 300
-RedirectExceedError::redirectExceed = true
-RedirectExceedError::status = 301
 
-module.exports = extend(LevelErrors,
-  SubkeyError: SubkeyError
-  RedirectError: RedirectError
-  RedirectExceedError: RedirectExceedError
-)
+module.exports = Errors
+

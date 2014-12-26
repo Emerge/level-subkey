@@ -3,7 +3,7 @@ var shell = require('./lib/Subkey') //the shell surrounds the nut
 var codec = require('levelup-sync/lib/codec')
 var merge = require('xtend')
 
-var ReadStream = require('levelup-sync/lib/read-stream')
+var ReadStream = require('nosql-stream/lib/read-stream')
 
 var precodec = require('./lib/codec/bytewise')
 

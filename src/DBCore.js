@@ -6,8 +6,7 @@ var precodec    = require('./codec')
 var PATH_SEP    = precodec.PATH_SEP
 var SUBKEY_SEP  = precodec.SUBKEY_SEP
 var Errors      = require("./errors")
-
-WriteError     = Errors.WriteError
+var WriteError  = Errors.WriteError
 
 function isFunction (f) {
   return 'function' === typeof f
@@ -77,8 +76,8 @@ function clone (_obj) {
   return obj
 }
 
-//the nut is a singleton for enhance the levelup's features to support the key path.
-//all subkeys share the same one nut at backend.
+//the DBCore is a singleton to extend the database's features to support the key path.
+//all subkeys share the same one DBCore at backend.
 exports = module.exports = function (db, precodec, codec) {
   var prehooks = hooks()
   var posthooks = hooks()
@@ -399,7 +398,7 @@ exports = module.exports = function (db, precodec, codec) {
         }
       return function () {}
     },
-    iterator: function (_opts, cb) {
+    iterator: function (_opts) {
       var opts = clone(_opts || {})
       var vPath = opts.path || []
 
@@ -463,16 +462,16 @@ exports = module.exports = function (db, precodec, codec) {
           }
         }
       }
-      if(ready) {
-        var result = wrapIterator((db.db || db).iterator(opts))
-        cb(null, result)
+      //if(ready) {
+        var result = (db.db || db).iterator(opts)
+        //cb(null, result)
         return result
-      }
-      else {
-        waiting.push(function () {
-          cb(null, wrapIterator((db.db || db).iterator(opts)))
-        })
-      }
+      //}
+      //else {
+      //  waiting.push(function () {
+      //    cb(null, wrapIterator((db.db || db).iterator(opts)))
+      //  })
+      //}
 
     }
   }

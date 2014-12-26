@@ -1,18 +1,16 @@
-precodec      = require("./codec")
-util          = require("abstract-object/lib/util")
-path          = require("./path")
 through       = require("through")
+util          = require("abstract-object/lib/util")
+RefObject     = require("abstract-object/RefObject")
+WriteStream   = require("nosql-stream/lib/write-stream")
+ReadStream    = require('nosql-stream/lib/read-stream')
+precodec      = require("./codec")
+path          = require("./path")
 addpre        = require("./range").addPrefix
 _DBCore       = require("./DBCore")
 errors        = require("./errors")
-levelUtil     = require("levelup-sync/lib/util")
-WriteStream   = require("levelup-sync/lib/write-stream")
-ReadStream    = require('levelup-sync/lib/read-stream')
-RefObject     = require("abstract-object/RefObject")
 
 ReadError     = errors.ReadError
 NotFoundError = errors.NotFoundError
-dispatchError = levelUtil.dispatchError
 
 setImmediate  = global.setImmediate or process.nextTick
 
@@ -354,12 +352,12 @@ sublevel = module.exports = (aDbCore, aCreateReadStream = ReadStream, aCreateWri
       that = @
       aDbCore.get key, vPath, @mergeOpts(opts), (err, value) ->
         if err
-          if (/notfound/i).test(err)
+          if (/notfound/i).test(err) #err.code is AbstractError.NotFound 
             err = new NotFoundError(
-                'Key not found in database [' + key + ']', err)
+                'Key not found in database [' + key + ']')
           else
             err = new ReadError(err)
-          return dispatchError(that, err, cb)
+          return that.dispatchError(err, cb)
         cb.call that, null, value
     alias: (aKeyPath, aAlias, aCallback) ->
       return @_realKey.alias.apply(@_realKey, arguments) if @_realKey
@@ -398,7 +396,7 @@ sublevel = module.exports = (aDbCore, aCreateReadStream = ReadStream, aCreateWri
       #the opts.path could be relative
       opts.path = getPathArray(opts.path, @_pathArray) or @_pathArray
       isFilterExists = isFunction(opts.filter)
-      stream = aCreateReadStream(opts, aDbCore.createDecoder(opts))
+      stream = aCreateReadStream(aDbCore, opts, aDbCore.createDecoder(opts))
       it = aDbCore.iterator opts, (err, it) ->
         stream.setIterator it
         it.stream = stream
@@ -445,7 +443,7 @@ sublevel = module.exports = (aDbCore, aCreateReadStream = ReadStream, aCreateWri
     writeStream: (opts) ->
       return @_realKey.writeStream.apply(@_realKey, arguments) if @_realKey
       opts = @mergeOpts(opts)
-      new aCreateWriteStream(opts, @)
+      new aCreateWriteStream(@, opts)
     createWriteStream: @.prototype.writeStream
 
     pathStream: (opts) ->
