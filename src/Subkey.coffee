@@ -3,7 +3,7 @@ util          = require("abstract-object/lib/util")
 path          = require("./path")
 through       = require("through")
 addpre        = require("./range").addPrefix
-_nut          = require("./DBCore")
+_DBCore       = require("./DBCore")
 errors        = require("./errors")
 levelUtil     = require("levelup-sync/lib/util")
 WriteStream   = require("levelup-sync/lib/write-stream")
@@ -27,14 +27,14 @@ assignDeprecatedPrefixOption = (options) ->
   deprecate.assignProperty options, "prefix", "path"
 
 
-FILTER_INCLUDED = _nut.FILTER_INCLUDED
-FILTER_EXCLUDED = _nut.FILTER_EXCLUDED
-FILTER_STOPPED  = _nut.FILTER_STOPPED
+FILTER_INCLUDED = _DBCore.FILTER_INCLUDED
+FILTER_EXCLUDED = _DBCore.FILTER_EXCLUDED
+FILTER_STOPPED  = _DBCore.FILTER_STOPPED
 PATH_SEP        = precodec.PATH_SEP
 SUBKEY_SEP      = precodec.SUBKEY_SEP
-getPathArray    = _nut.getPathArray
-resolveKeyPath  = _nut.resolveKeyPath
-pathArrayToPath = _nut.pathArrayToPath
+getPathArray    = _DBCore.getPathArray
+resolveKeyPath  = _DBCore.resolveKeyPath
+pathArrayToPath = _DBCore.pathArrayToPath
 isFunction      = util.isFunction
 isString        = util.isString
 isObject        = util.isObject
@@ -54,12 +54,12 @@ LOADING_STATES =
   modified  : 4
   deleted   : 5
 
-sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteStream = WriteStream) ->
+sublevel = module.exports = (aDbCore, aCreateReadStream = ReadStream, aCreateWriteStream = WriteStream) ->
   class Subkey
     inherits(Subkey, RefObject)
     @.prototype.__defineGetter__ "sublevels", ->
-      deprecate "sublevels, all subkeys(sublevels) have cached on nut now."
-      r = nut.subkeys(path.join(@_pathArray, "*"))
+      deprecate "sublevels, all subkeys(sublevels) have cached on aDbCore now."
+      r = aDbCore.subkeys(path.join(@_pathArray, "*"))
       result = {}
       for k of r
         result[path.basename(k)] = r[k]
@@ -86,13 +86,13 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
     @.prototype.__defineGetter__ "loadingState", ->
       vState = @_loadingState_
       if not vState? then "unload" else ["loading", "loaded", "dirtied", "modifying", "modified", "deleted"][vState]
-    @isAlias: nut.isAlias
+    @isAlias: aDbCore.isAlias
     FILTER_INCLUDED: FILTER_INCLUDED
     FILTER_EXCLUDED: FILTER_EXCLUDED
     FILTER_STOPPED: FILTER_STOPPED
     LOADING_STATES: LOADING_STATES
     Class: Subkey
-    _NUT: nut
+    db: aDbCore
     version: version
     setLoadingState: (value, emitted = false, param1, param2)->
       @_loadingState_ = LOADING_STATES[value]
@@ -111,12 +111,12 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
       aCallback ||= ->
       that = @
       vOptions = @options
-      nut.get @fullName, [], vOptions, (err, value) ->
+      aDbCore.get @fullName, [], vOptions, (err, value) ->
         if not err?
           that._value = value
           if vOptions.valueEncoding == "json" and Subkey.isAlias(value)
-            nut.get value, [], that.mergeOpts({getRealKey: true}), (err, value)->
-              nut.createSubkey value, Subkey.bind(null, value), vOptions, (err, result)->
+            aDbCore.get value, [], that.mergeOpts({getRealKey: true}), (err, value)->
+              aDbCore.createSubkey value, Subkey.bind(null, value), vOptions, (err, result)->
                 that._realKey = result
                 aCallback(err, that)
                 that.setLoadingState "loaded"
@@ -127,7 +127,7 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
           aCallback(err, that)
           that.setLoadingState "unload"#, true, err
     load: (aReadyCallback)->
-      if @isUnload() and nut.isOpen() is true
+      if @isUnload() and aDbCore.isOpen() is true
         vOptions = @options
         if vOptions and vOptions.loadValue isnt false
           @loadValue aReadyCallback
@@ -148,7 +148,7 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
         closed: @emit.bind(@, "closed")
         error: @emit.bind(@, "error")
       for event, listener of @listeners
-        nut.on event, listener 
+        aDbCore.on event, listener 
       @setLoadingState "unload"
       @load(aReadyCallback)
       that = @
@@ -174,8 +174,8 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
               if aOptions and aOptions.valueEncoding is "json" and Subkey.isAlias(vValue)
                 that._loadingState_ = LOADING_STATES.loading
                 that.setLoadingState "loading"
-                nut.get vValue, [], that.mergeOpts({getRealKey: true}), (err, value)->
-                  that._realKey = nut.createSubkey value, Subkey.bind(null, value), aOptions, (err, result) ->
+                aDbCore.get vValue, [], that.mergeOpts({getRealKey: true}), (err, value)->
+                  that._realKey = aDbCore.createSubkey value, Subkey.bind(null, value), aOptions, (err, result) ->
                     that.setLoadingState "loaded"
     final: ->
       @freeSubkeys()
@@ -192,24 +192,24 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
         i++
       @unhooks = []
       for event, listener of @listeners
-        nut.removeListener event, listener
+        aDbCore.removeListener event, listener
     constructor: (aKeyPath, aOptions, aCallback)->
       if isFunction aOptions
         aCallback = aOptions
         aOptions = {}
       if not (this instanceof Subkey)
         vKeyPath = path.normalizeArray getPathArray aKeyPath
-        vSubkey = nut.createSubkey(vKeyPath, Subkey.bind(null, vKeyPath), aOptions, aCallback)
+        vSubkey = aDbCore.createSubkey(vKeyPath, Subkey.bind(null, vKeyPath), aOptions, aCallback)
         return vSubkey
 
       super(aKeyPath, aOptions, aCallback)
     parent: ()->
       p = path.dirname @path()
-      result = nut.subkey(p)
+      result = aDbCore.subkey(p)
       #get latest parent
       while not result? and p != PATH_SEP
         p = path.dirname p
-        result = nut.subkey(p)
+        result = aDbCore.subkey(p)
       return result
     setPath: (aPath, aCallback) ->
       aPath = getPathArray(aPath)
@@ -217,7 +217,7 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
         aPath = path.normalizeArray(aPath)
         vPath = @path() if @_pathArray?
         if vPath? and vPath isnt path.resolve(aPath)
-          nut.delSubkey(vPath)
+          aDbCore.delSubkey(vPath)
           @final()
           #@_pathArray = aPath
           @init(aPath, @options, aCallback)
@@ -242,7 +242,7 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
       o
     #the writeStream use db.isOpen and db.once('ready') to ready write stream.
     isOpen: ->
-      nut.isOpen()
+      aDbCore.isOpen()
     pathAsArray: ->
       @_pathArray.slice()
     prefix: deprecate["function"](->
@@ -270,7 +270,7 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
         aKeyPattern = path.join(@_pathArray, "*")
       else
         aKeyPattern = path.resolve(@_pathArray, aKeyPattern)
-      vSubkeys = nut.subkeys(aKeyPattern)
+      vSubkeys = aDbCore.subkeys(aKeyPattern)
       for k of vSubkeys
         vSubkeys[k].free()
       return
@@ -306,7 +306,7 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
           value: aOperation.value
           type: aOperation.type
         ]
-      nut.apply aOperation, @mergeOpts(opts), (err) ->
+      aDbCore.apply aOperation, @mergeOpts(opts), (err) ->
         unless err
           that.emit.apply that, vInfo
           cb.call that, null
@@ -352,7 +352,7 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
       vPath = if isString(opts.path) then getPathArray(opts.path) else @_pathArray
       opts.path = getPathArray(opts.path)  if opts.path
       that = @
-      nut.get key, vPath, @mergeOpts(opts), (err, value) ->
+      aDbCore.get key, vPath, @mergeOpts(opts), (err, value) ->
         if err
           if (/notfound/i).test(err)
             err = new NotFoundError(
@@ -373,7 +373,7 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
     _alias: (aKeyPath, aAlias, aCallback) ->
       @_doOperation({key:aAlias, value:aKeyPath, type: "put"}, {valueEncoding: 'utf8'}, aCallback)
     pre: (key, hook) ->
-      unhook = @_addHook(key, hook, nut.pre)
+      unhook = @_addHook(key, hook, aDbCore.pre)
       @unhooks.push unhook
       lst = @unhooks
       return ->
@@ -382,7 +382,7 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
         unhook()
 
     post: (key, hook) ->
-      unhook = @_addHook(key, hook, nut.post)
+      unhook = @_addHook(key, hook, aDbCore.post)
       @unhooks.push unhook
       lst = @unhooks
       return ->
@@ -398,11 +398,10 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
       #the opts.path could be relative
       opts.path = getPathArray(opts.path, @_pathArray) or @_pathArray
       isFilterExists = isFunction(opts.filter)
-      stream = aCreateReadStream(opts, nut.createDecoder(opts))
-      it = nut.iterator(opts, (err, it) ->
+      stream = aCreateReadStream(opts, aDbCore.createDecoder(opts))
+      it = aDbCore.iterator opts, (err, it) ->
         stream.setIterator it
         it.stream = stream
-      )
       
       #to avoid the stream is a pull-stream
       if not stream.type and isFilterExists
@@ -417,7 +416,7 @@ sublevel = module.exports = (nut, aCreateReadStream = ReadStream, aCreateWriteSt
           switch opts.filter(vKey, vValue)
             when FILTER_EXCLUDED #exclude
               return
-            when FILTER_STOPPED #this.emit('end')   //halt
+            when FILTER_STOPPED #this.emit('end')   //halt and this key is excluded.
               @end()
               return
           

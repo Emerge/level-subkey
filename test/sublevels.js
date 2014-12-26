@@ -71,8 +71,8 @@ test('sublevels-hooks-free', function (t) {
   //expected[bar.path()] = bar
   expected[barLess.path()] = barLess
   expected[barMore.path()] = barMore
-  t.deepEqual(base._NUT.subkeys(path.join(bar.pathAsArray(), "*")), expected)
-  t.deepEqual(base._NUT.subkeys()[bar.path()], bar)
+  t.deepEqual(base.db.subkeys(path.join(bar.pathAsArray(), "*")), expected)
+  t.deepEqual(base.db.subkeys()[bar.path()], bar)
   base.free()
   t.equal(bar.RefCount, -1)
   t.equal(barLess.RefCount, -1)
@@ -80,8 +80,8 @@ test('sublevels-hooks-free', function (t) {
   t.strictEqual(bar.unhooks.length, 0)
   t.strictEqual(barLess.unhooks.length, 0)
   t.strictEqual(barMore.unhooks.length, 0)
-  t.deepEqual(base._NUT.subkeys(path.join(bar.pathAsArray(), "*")), {})
-  t.strictEqual(base._NUT.subkeys()[bar.path()], undefined)
+  t.deepEqual(base.db.subkeys(path.join(bar.pathAsArray(), "*")), {})
+  t.strictEqual(base.db.subkeys()[bar.path()], undefined)
   t.end()
 })
 
