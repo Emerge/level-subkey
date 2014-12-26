@@ -1,21 +1,25 @@
 # level-subkey
 
+[![build status](https://secure.travis-ci.org/snowyu/level-subkey.png)](https://travis-ci.org/snowyu/level-subkey)
+[[!https://david-dm.org/snowyu/level-subkey.svg]](https://david-dm.org/snowyu/level-subkey#info=dependencies)
+
 The level-subkey is modified from [level-sublevel](https://github.com/dominictarr/level-sublevel).
 
 The level-subkey use the path to separate sections of levelup, with hooks!
 these sublevels are called dynamic subkey.
 
-[![build status](https://secure.travis-ci.org/snowyu/level-subkey.png)](https://travis-ci.org/snowyu/level-subkey)
-
 [![NPM](https://nodei.co/npm/level-subkey.png?stars&downloads&downloadRank)](https://nodei.co/npm/level-subkey/) [![NPM](https://nodei.co/npm-dl/level-subkey.png?months=6&height=3)](https://nodei.co/npm/level-subkey/)
 
-This module allows you to create a hierarchy data store with
+This module allows you to create a hierarchy data store with [abstract-nosql](https://github.com/snowyu/node-abstract-nosql) database or 
 [levelup-sync](https://github.com/snowyu/node-levelup-sync) database,
 kinda like tables in an sql database, but hierarchical, evented, and ranged,
 for real-time changing data.
 
 ## Main Features different from level-sublevel
 
+* db can use the [abstract-nosql](https://github.com/snowyu/node-abstract-nosql) database directly.
+* Add synchronous methods supports.
+ * Note: you should use the [abstract-nosql](https://github.com/snowyu/node-abstract-nosql) database or [levelup-sync](https://github.com/snowyu/node-levelup-sync) database.
 * dynamic sublevels via key path
 * the keys are _encoded_ has changed, and _this_ means
 you cannot run level-subkey on a database you created with level-sublevel
