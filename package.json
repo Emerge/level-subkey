@@ -93,5 +93,8 @@
       "iphone/6.0..latest",
       "android-browser/4.2..latest"
     ]
+  },
+  "optionalDependencies": {
+    "pull-stream": "~2.26.0"
   }
 }
