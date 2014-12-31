@@ -405,7 +405,7 @@ exports = module.exports = function (db, precodec, codec) {
       //the key is lowerBound or upperBound.
       //if opts.start is exists then lowBound key is opt.start
       function encodeKey(key) {
-        return encodePath(resolveKeyPath(vPath, key), opts, {})
+        return encodePath(resolveKeyPath(vPath, key), opts, {keyEncoding: 'utf8'})
       }
 
       if (opts.bounded !== false) {

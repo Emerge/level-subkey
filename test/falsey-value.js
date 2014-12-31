@@ -1,9 +1,9 @@
 var tape     = require('tape')
-var sublevel = require('../bytewise')
+var sublevel = require('../index')
 var level    = require('level-test-sync')()
 
 var falsies = [
-  0//, null, false, ''
+  0, null, false, ''
 ]
 
 var names = [
@@ -11,7 +11,7 @@ var names = [
 ]
 
 var db = sublevel(
-  level('level-sublevel-falsey', {valueEncoding: 'json'})
+  level('level-sublevel-falsey', {valueEncoding: 'json', keyEncoding: 'json'})
 )
 
 falsies.forEach(function (falsey, i) {
