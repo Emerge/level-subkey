@@ -139,6 +139,7 @@ tape('Stream-on-Last', function (t) {
                 console.log("last=", lastKey)
                 t.equal(result.length, 6)
                 t.strictEqual(lastKey, undefined)
+                console.log("result=", result)
                 t.end()
             })
         })

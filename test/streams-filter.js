@@ -45,15 +45,15 @@ require('tape')('sublevel-streams-filter', function (t) {
 
   function filterEnd(key, value) {
       console.log("filter:", key, " v:", value)
-      if (key == "d5") return FILTER_STOPPED //return true to stop.
+      if (key == "d4") return FILTER_STOPPED //return true to stop.
   }
   function filterKeyOnly(key, value) {
       t.strictEqual(value, null)
-      if (key == "d5") return FILTER_STOPPED //return true to stop.
+      if (key == "d4") return FILTER_STOPPED //return true to stop.
   }
   function filterValue(key, value) {
       t.strictEqual(key, null)
-      if (value == _d) return FILTER_STOPPED //return true to stop.
+      if (value == _c) return FILTER_STOPPED //return true to stop.
   }
 
   a.batch([

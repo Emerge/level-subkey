@@ -105,7 +105,6 @@ sublevel = module.exports = (aDbCore, aCreateReadStream = ReadStream, aCreateWri
       @_realKey?
     loadValue: (aCallback) ->
       @setLoadingState "loading"
-      #@emit("loading")
       aCallback ||= ->
       that = @
       vOptions = @options
@@ -395,36 +394,9 @@ sublevel = module.exports = (aDbCore, aCreateReadStream = ReadStream, aCreateWri
       
       #the opts.path could be relative
       opts.path = getPathArray(opts.path, @_pathArray) or @_pathArray
-      isFilterExists = isFunction(opts.filter)
       stream = aCreateReadStream(aDbCore, opts, aDbCore.createDecoder(opts))
-      it = aDbCore.iterator opts, (err, it) ->
-        stream.setIterator it
-        it.stream = stream
-      
-      #to avoid the stream is a pull-stream
-      if not stream.type and isFilterExists
-        filterStream = through((item) ->
-          vKey = vValue = null
-          if isObject(item)
-            vKey = item.key
-            vValue = item.value
-          else if opts.keys isnt false
-            vKey = item
-          else vValue = item  if opts.values isnt false
-          switch opts.filter(vKey, vValue)
-            when FILTER_EXCLUDED #exclude
-              return
-            when FILTER_STOPPED #this.emit('end')   //halt and this key is excluded.
-              @end()
-              return
-          
-          #this.emit('data',item)
-          @push item
-        , null)
-        filterStream.writable = false
-        stream = stream.pipe(filterStream)
       stream
-    createReadStream: @.prototype.readStream
+    createReadStream: @::readStream
 
     valueStream: (opts) ->
       opts = opts or {}
