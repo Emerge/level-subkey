@@ -1,11 +1,12 @@
-util        = require("abstract-object/lib/util")
+xtend       = require('xtend')
+util        = require('abstract-object/lib/util')
 minimatch   = require('minimatch')
 path        = require('./path')
 hooks       = require('./hooks')
 ltgt        = require('ltgt')
-precodec    = require('./codec')
-PATH_SEP    = precodec.PATH_SEP
-SUBKEY_SEP  = precodec.SUBKEY_SEP
+codec       = require('./codec')
+PATH_SEP    = codec.PATH_SEP
+SUBKEY_SEP  = codec.SUBKEY_SEP
 Errors      = require("./errors")
 WriteError  = Errors.WriteError
 isFunction  = util.isFunction
@@ -16,26 +17,9 @@ isAlias =  (aKey) ->
   isString(aKey) && aKey.length > 0 && aKey[0] is PATH_SEP
 
 pathArrayToPath = path.join
+pathToPathArray = path.toArray
 
-pathToPathArray = (aPath) ->
-  aPath = aPath.substring(1) while (aPath.length && aPath[0] == PATH_SEP) 
-  aPath = aPath.substring(0, aPath.length-1) while (aPath.length && aPath[aPath.length-1] == PATH_SEP) 
-  if (aPath.length)
-    aPath.split(PATH_SEP)
-  else
-    []
-
-getPathArray = (aPath, aParentPath) ->
-  return aPath unless aPath?
-  #is a subkey object?
-  return aPath.pathAsArray() if isFunction(aPath.pathAsArray)
-  if isString(aPath)
-    if aParentPath
-      aPath = path.resolveArray(aParentPath, aPath)
-      aPath.shift(0,1)
-    else aPath = pathToPathArray(aPath)
-  #is a path array:
-  aPath
+getPathArray = codec.getPathArray
 
 resolveKeyPath = (aPathArray, aKey)->
   if isString(aKey) && aKey.length
@@ -56,38 +40,16 @@ clone = (_obj) ->
 
 #the DBCore is a singleton to extend the database's features to support the key path.
 #all subkeys share the same one DBCore at backend.
-exports = module.exports = (db, precodec, codec) ->
+exports = module.exports = (db) ->
   prehooks = hooks()
   posthooks = hooks()
   _subkeys = {}  #cache all subkey objects here.
   waiting = []; ready = false
 
-  #aKeyPath=[path, key]
-  encodePath = (aKeyPath, opts, op) ->
-    vSep = (op && op.separator) || (opts && opts.separator)
-    vSepRaw = (op && op.separatorRaw) || (opts && opts.separatorRaw)
-    return precodec.encode([ aKeyPath[0], codec.encodeKey(aKeyPath[1], opts, op ), vSep, vSepRaw])
-
-  decodePath = (data) ->
-    return precodec.decode(data)
-
-  decodeKeyWithOptions = (key, opts) ->
-    #v=[parent, key, separator, realSeparator]
-    #realSeparator is optional only opts.separator && opts.separator != realSeparator
-    v = precodec.decode(key, opts.separator)
-    vSep = v[2] #separator
-    vSep = PATH_SEP if (vSep == undefined)  #if the precodec is other codec.
-    key = codec.decodeKey(v[1], opts);
-    if opts.absoluteKey
-        key = pathArrayToPath(v[0]) + vSep + key
-    else if opts.path && isString(key) && key != ""
-        vPath = path.relative(opts.path, v[0])
-        if vPath == "" && vSep == PATH_SEP
-          vSep = "" 
-        else if vSep.length >= 2
-          vSep = vSep.substring(1)
-        key = vPath + vSep + key
-    key
+  encodeKey   = codec.encodeKey
+  decodeKey   = codec.decodeKey
+  encodeValue = codec.encodeValue
+  decodeValue = codec.decodeValue
 
   addEncodings = (op, aParent) ->
     if aParent && aParent.options
@@ -211,8 +173,8 @@ exports = module.exports = (db, precodec, codec) ->
 
       if ops.length
         (db.db || db).batch ops.map( (op) ->
-            key: encodePath(op._keyPath, opts, op)
-            value: if op.type != 'del' then codec.encodeValue(op.value,opts,op) else undefined
+            key: encodeKey(op._keyPath, xtend(opts, op))
+            value: if op.type != 'del' then encodeValue(op.value,xtend(opts,op)) else undefined
             type: op.type || (if op.value == undefined then 'del' else 'put')
           ),
           opts,
@@ -225,10 +187,12 @@ exports = module.exports = (db, precodec, codec) ->
       return
     get: (key, aPath, opts, cb) ->
       getRedirect = (aDb, aKey, aOptions) ->
-        vNeedRedirect = aOptions.valueEncoding == "json" && isAlias(aKey)
+        console.log  'aKey=',aKey, aOptions.valueEncoding is "json"
+        vNeedRedirect = aOptions.valueEncoding is "json" and isAlias(aKey)
+        console.log  vNeedRedirect, aOptions.allowRedirect
         if aOptions.allowRedirect > 0 && vNeedRedirect
           aOptions.allowRedirect--
-          aDb.get encodePath(resolveKeyPath([], aKey), aOptions), aOptions, (err, value) ->
+          aDb.get encodeKey(resolveKeyPath([], aKey), aOptions), aOptions, (err, value) ->
             if (err)
               cb(err)
             else
@@ -243,16 +207,17 @@ exports = module.exports = (db, precodec, codec) ->
                   if aOptions.getRealKey is true
                     cb(null, aKey)
                   else
-                    cb(null, codec.decodeValue(value, aOptions))
+                    cb(null, decodeValue(value, aOptions))
               #switch(vNeedRedirect)
           # need redirect
           return 2
         else
           if (vNeedRedirect) then 1 else 0
 
-      opts.asBuffer = codec.isValueAsBuffer(opts)
+      #opts.asBuffer = codec.isValueAsBuffer(opts)
+      opts.asBuffer = false
       return (db.db || db).get(
-        encodePath(resolveKeyPath(aPath, key), opts),
+        encodeKey(resolveKeyPath(aPath, key), opts),
         opts,
         (err, value) ->
           if err
@@ -280,27 +245,27 @@ exports = module.exports = (db, precodec, codec) ->
       makeData = (key, value) ->
         result = {}
         if key
-          key = decodeKeyWithOptions(key, opts)
+          key = decodeKey(key, opts)
           if isObject(key)
             result.key = key.key
             result.separator = key.separator
           else
             result.key = key
-        result.value = codec.decodeValue(value, opts) if value
+        result.value = decodeValue(value, opts) if value
         result
 
       if opts.keys isnt false && opts.values isnt false
         return (key, value) ->
           result =
-            key: decodeKeyWithOptions(key, opts)
-            value: codec.decodeValue(value, opts)
+            key: decodeKey(key, opts)
+            value: decodeValue(value, opts)
           if opts.absoluteKey isnt true
             result.path = pathArrayToPath(opts.path)
           result
       if opts.values isnt false
-        return (_, value) -> codec.decodeValue(value, opts)
+        return (_, value) -> decodeValue(value, opts)
       if opts.keys isnt false
-        return (key) -> decodeKeyWithOptions(key, opts)
+        return (key) -> decodeKey(key, opts)
       return ->
 
     iterator: (_opts) ->
@@ -309,16 +274,12 @@ exports = module.exports = (db, precodec, codec) ->
 
       #the key is lowerBound or upperBound.
       #if opts.start is exists then lowBound key is opt.start
-      console.log 'create iter'
-      encodeKey = (key) ->
-        console.log 'e=',vPath, key
-        r= encodePath(resolveKeyPath(vPath, key), opts, {keyEncoding: 'utf8'})
-        console.log r
-        r
+      encodeKeyPath = (key) ->
+        encodeKey(resolveKeyPath(vPath, key), xtend(opts, {keyEncoding: false, encoding: false}))
 
       #convert the lower/upper bounds to real lower/upper bounds.
       #precodec.lowerBound, precodec.upperBound are default bounds in case of the opts have no bounds.
-      ltgt.toLtgt(opts, opts, encodeKey, precodec.lowerBound, precodec.upperBound) if opts.bounded isnt false
+      ltgt.toLtgt(opts, opts, encodeKeyPath, codec.lowerBound, codec.upperBound) if opts.bounded isnt false
 
       #because the ltgt.toLtgt will encode the lt/lte,gt/gte
       #I need make the 'next' as decoded key, not raw key!!
@@ -341,8 +302,8 @@ exports = module.exports = (db, precodec, codec) ->
       #create an empty stream.
       opts.limit = -1 if 'number' isnt typeof opts.limit
 
-      opts.keyAsBuffer = precodec.buffer
-      opts.valueAsBuffer = codec.isValueAsBuffer(opts)
+      #opts.keyAsBuffer = codec.buffer
+      #opts.valueAsBuffer = codec.isValueAsBuffer(opts)
       #console.log("it:opts:", opts)
 
       result = (db.db || db).iterator(opts)

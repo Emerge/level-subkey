@@ -3,7 +3,7 @@ util          = require("abstract-object/lib/util")
 RefObject     = require("abstract-object/RefObject")
 WriteStream   = require("nosql-stream/lib/write-stream")
 ReadStream    = require('nosql-stream/lib/read-stream')
-precodec      = require("./codec")
+codec         = require("./codec")
 path          = require("./path")
 addpre        = require("./range").addPrefix
 _DBCore       = require("./DBCore")
@@ -28,8 +28,8 @@ assignDeprecatedPrefixOption = (options) ->
 FILTER_INCLUDED = _DBCore.FILTER_INCLUDED
 FILTER_EXCLUDED = _DBCore.FILTER_EXCLUDED
 FILTER_STOPPED  = _DBCore.FILTER_STOPPED
-PATH_SEP        = precodec.PATH_SEP
-SUBKEY_SEP      = precodec.SUBKEY_SEP
+PATH_SEP        = codec.PATH_SEP
+SUBKEY_SEP      = codec.SUBKEY_SEP
 getPathArray    = _DBCore.getPathArray
 resolveKeyPath  = _DBCore.resolveKeyPath
 pathArrayToPath = _DBCore.pathArrayToPath
@@ -132,6 +132,7 @@ sublevel = module.exports = (aDbCore, aCreateReadStream = ReadStream, aCreateWri
           aReadyCallback(null, @) if aReadyCallback
     init: (aKeyPath, aOptions, aReadyCallback)->
       super()
+      #codec.applyEncoding(aOptions)
       @options = aOptions
       aKeyPath = getPathArray(aKeyPath)
       aKeyPath = if aKeyPath then path.normalizeArray(aKeyPath) else []
@@ -368,7 +369,7 @@ sublevel = module.exports = (aDbCore, aCreateReadStream = ReadStream, aCreateWri
       aAlias = aAlias.path() if isFunction aAlias.path
       @_alias(aKeyPath, aAlias, aCallback)
     _alias: (aKeyPath, aAlias, aCallback) ->
-      @_doOperation({key:aAlias, value:aKeyPath, type: "put"}, {valueEncoding: 'utf8'}, aCallback)
+      @_doOperation({key:aAlias, value:aKeyPath, type: "put"}, {valueEncoding: false}, aCallback)
     pre: (key, hook) ->
       unhook = @_addHook(key, hook, aDbCore.pre)
       @unhooks.push unhook
@@ -403,20 +404,20 @@ sublevel = module.exports = (aDbCore, aCreateReadStream = ReadStream, aCreateWri
       opts.values = true
       opts.keys = false
       @readStream opts
-    createValueStream: @.prototype.valueStream
+    createValueStream: @::valueStream
 
     keyStream: (opts) ->
       opts = opts or {}
       opts.values = false
       opts.keys = true
       @readStream opts
-    createKeyStream: @.prototype.keyStream
+    createKeyStream: @::keyStream
 
     writeStream: (opts) ->
       return @_realKey.writeStream.apply(@_realKey, arguments) if @_realKey
       opts = @mergeOpts(opts)
       new aCreateWriteStream(@, opts)
-    createWriteStream: @.prototype.writeStream
+    createWriteStream: @::writeStream
 
     pathStream: (opts) ->
       opts = opts or {}
@@ -424,7 +425,7 @@ sublevel = module.exports = (aDbCore, aCreateReadStream = ReadStream, aCreateWri
       opts.separatorRaw = true
       opts.gte = "0"
       @readStream opts
-    createPathStream: @.prototype.pathStream
+    createPathStream: @::pathStream
 
   Subkey
 

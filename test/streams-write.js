@@ -13,7 +13,7 @@ var resolveKeyPath = _nut.resolveKeyPath
 var pathArrayToPath = _nut.pathArrayToPath
 var pathToPathArray = _nut.pathToPathArray
 var SUBKEY_SEPS = precodec.SUBKEY_SEPS
-var encode = precodec.encode
+var encode = precodec._encode
 
 require('rimraf').sync('/tmp/test-sublevel-writestream')
 

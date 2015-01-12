@@ -1,6 +1,6 @@
 # level-subkey
 
-[![build status](https://secure.travis-ci.org/snowyu/level-subkey.png)](https://travis-ci.org/snowyu/level-subkey)
+[![build status](https://secure.travis-ci.org/snowyu/level-subkey.png?branch=master)](https://travis-ci.org/snowyu/level-subkey)
 [[!https://david-dm.org/snowyu/level-subkey.svg]](https://david-dm.org/snowyu/level-subkey#info=dependencies)
 
 The level-subkey is modified from [level-sublevel](https://github.com/dominictarr/level-sublevel).
@@ -17,12 +17,12 @@ for real-time changing data.
 
 ## Main Features different from level-sublevel
 
-* db can use the [abstract-nosql](https://github.com/snowyu/node-abstract-nosql) database directly.
+* db use the [abstract-nosql](https://github.com/snowyu/node-abstract-nosql)(compatible with leveldown) database directly.
 * Add synchronous methods supports.
  * Note: you should use the [abstract-nosql](https://github.com/snowyu/node-abstract-nosql) database or [levelup-sync](https://github.com/snowyu/node-levelup-sync) database.
 * dynamic sublevels via key path
 * the keys are _encoded_ has changed, and _this_ means
-you cannot run level-subkey on a database you created with level-sublevel
+  you cannot run level-subkey on a database you created with level-sublevel
 * hierarchy data store like path now.
 * rename options.prefix to options.path
   * the path can be a sublevel object, a key path string, or a path array.
@@ -111,19 +111,19 @@ you cannot run level-subkey on a database you created with level-sublevel
         * the del itself is not passed.
       * subkey._value is the original the value of the key(alias point ot the another key).
       * subkey.value is the real value:
-        * value = if @_realKey? then @_realKey._value else @_value
+        * value = if @\_realKey? then @\_realKey.\_value else @\_value
 + loading state
 + subkey.get([options], callback) to get itself value.
 * the valueEncoding and keyEncoding should not change on the same subkey.
 * you must escape the PATH_SEP for the first char(it as mark the redirection/alias key) if the valueEncoding is string(utf8)
 + Class property to get Subkey Class.
 * the Subkey instance lifecycle state manage.
- * object state(_obj_state):
+ * object state(\_obj_state):
    * initing: the object is initing.
    * inited: the object is created.
    * destroying: the object is destroying(before destroy).
    * destroyed: the object is destroyed(after destroy). the destroyed event will be emitted.
- * object loading state(_loading_state):
+ * object loading state(\_loading_state):
    * unload: the object is not loaded from database.
    * loading: the object is loading from database.
    * loaded: the object has already been loaded from database.
@@ -133,11 +133,7 @@ you cannot run level-subkey on a database you created with level-sublevel
      * modifying: the object has been modified to database, but not loaded to the object(affect the loading state to loading)
      * modified: the object has been modified to database(not affect the loading state).
      * deleted: the object has been deleted from database(affect the object state to destroyed).
-* async problem:
-  * sync is very simple.
-  * a = subkey("mykey") //the nut will cache this key.
-  * b = subkey("mykey", function(err, theKey){})
-  * the nut.createSubkey must change to async too.
+* use nosql-stream instead.
 
 ## todo
 
@@ -604,7 +600,50 @@ sub2.batch([
 ], function (err) {...})
 ```
 
-## License
+# Internal
+
+
+## Subkey DBCore
+
+All Subkeys share the only one db core instance to store data.
+
+
+* Data Operations:
+  * get(key, path, options)
+  * apply(operations, options): batch
+    * put: key, path
+    * del: key, path
+  * iterator supports
+    * iterator(options)
+    * createDecoder
+* Subkey Cache Manage:
+  * subkey(path):  get a subkey in the cache.
+  * subkeys(aPattern): get matched subkey list in the cache. defaults to all subkeys in the cache.
+  * createSubkey(aPathArray, aNewSubkeyProc, options, callback)
+  * delSubkey(aPath): remove a subkey from the cache.
+  * freeSubkey(aPathArray): free the subkey and then remove it from the cache.
+* Data Events
+ * on, once, removeListener: pass events to the database.
+ * hooks
+   * pre(options, callback)
+   * post(options, callback)
+
+## Subkey Codec
+
+encode/decode key and value.
+
+```coffee
+class SubkeyCodec
+  register SubkeyCodec, Codec
+
+  # options.path, options.separator
+  encode: (key, options)->
+    
+  decode: (key, options)->
+
+```
+
+# License
 
 MIT
 

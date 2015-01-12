@@ -57,7 +57,7 @@ function random () {
 
 module.exports = function (format) {
 
-  var encoded = expected.map(format.encode)
+  var encoded = expected.map(format._encode)
 
   tape('ordering', function (t) {
 
@@ -66,9 +66,9 @@ module.exports = function (format) {
     var actual =
       expected.slice()
         .sort(random)
-        .map(format.encode)
+        .map(format._encode)
         .sort()
-        .map(format.decode)
+        .map(format._decode)
 
     console.log(actual)
 
@@ -84,9 +84,9 @@ module.exports = function (format) {
     var actual =
       others.slice()
         .sort(random)
-        .map(format.encode)
+        .map(format._encode)
         .sort()
-        .map(format.decode)
+        .map(format._decode)
 
     console.log(actual)
 
@@ -136,15 +136,15 @@ module.exports = function (format) {
       t.deepEqual(format.SUBKEY_SEPS, ["/!~", ".$-"])
       t.equal(format.SUBKEY_SEP, ".")
       t.equal(format.escapeString("Hello~world!"), "Hello%7eworld%21")
-      t.equal(format.encode([["path"], "Key!ABC", "!"]), '/path/$Key%21ABC')
-      t.equal(format.encode([["path"], "KeyABC", "!"]), '/path/$KeyABC')
-      t.equal(format.encode([["path"], "!KeyABC", "!"]), '/path/$KeyABC')
-      t.equal(format.encode([["path"], "!", "!"]), '/path/$')
-      t.equal(format.encode([["path"], "", "!"]), '/path/$')
-      t.equal(format.encode([["path"], "key"]), '/path.key')
-      t.equal(format.encode([[], "\uffff", '!']), '/$\uffff')
-      t.deepEqual(format.decode('/path/Key$ABC'), [["path", "Key"], "ABC", "/!"])
-      t.deepEqual(format.decode('/path/Key.ABC'), [["path", "Key"], "ABC", "/"])
+      t.equal(format._encode([["path"], "Key!ABC", "!"]), '/path/$Key%21ABC')
+      t.equal(format._encode([["path"], "KeyABC", "!"]), '/path/$KeyABC')
+      t.equal(format._encode([["path"], "!KeyABC", "!"]), '/path/$KeyABC')
+      t.equal(format._encode([["path"], "!", "!"]), '/path/$')
+      t.equal(format._encode([["path"], "", "!"]), '/path/$')
+      t.equal(format._encode([["path"], "key"]), '/path.key')
+      t.equal(format._encode([[], "\uffff", '!']), '/$\uffff')
+      t.deepEqual(format._decode('/path/Key$ABC'), [["path", "Key"], "ABC", "/!"])
+      t.deepEqual(format._decode('/path/Key.ABC'), [["path", "Key"], "ABC", "/"])
       t.end()
   })
 
