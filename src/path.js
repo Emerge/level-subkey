@@ -26,6 +26,23 @@ var util = require('abstract-object/lib/util');
 var SEP = require("./codec/separator");
 //var PATH_SEP = SEP.PATH_SEP
 
+//convert path string to path array.
+function toArray(aPath) {
+  var PATH_SEP = SEP.PATH_SEP;
+  while (aPath.length && aPath[0] === PATH_SEP) {
+    aPath = aPath.substring(1);
+  }
+  while (aPath.length && aPath[aPath.length - 1] === PATH_SEP) {
+    aPath = aPath.substring(0, aPath.length - 1);
+  }
+  if (aPath.length) {
+    return aPath.split(PATH_SEP);
+  } else {
+    return [];
+  }
+}
+exports.toArray = toArray;
+
 // resolves . and .. elements in a path array with directory names there
 // must be no slashes, empty elements, or device names (c:\) in the array
 // (so also no leading and trailing slashes - it does not distinguish
