@@ -21,7 +21,7 @@
 
 
 //var isWindows = process.platform === 'win32';
-var util = require('./util');
+var util = require('abstract-object/lib/util');
 
 var SEP = require("./codec/separator");
 //var PATH_SEP = SEP.PATH_SEP

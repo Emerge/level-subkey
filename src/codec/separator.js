@@ -1,4 +1,4 @@
-var util = require("../util")
+var util = require("abstract-object/lib/util")
 var isString = util.isString
 var isArray = util.isArray
 
