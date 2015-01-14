@@ -132,6 +132,6 @@ exports.decode = function (s, aSeparator) {
 exports.buffer = false
 
 exports.lowerBound = '\u0000'
-exports.upperBound = '\uffff'
+exports.upperBound = '\udbff\udfff'
 
 
