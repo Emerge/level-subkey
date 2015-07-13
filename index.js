@@ -1,8 +1,8 @@
 
 
-var nut   = require('./lib/DBCore')
-var Subkey = require('./lib/Subkey')
-var precodec = require('./lib/codec')
+var nut   = require('./src/DBCore')
+var Subkey = require('./src/Subkey')
+var precodec = require('./src/codec')
 var codec = require('levelup-sync/lib/codec')
 var merge = require('xtend')
 
